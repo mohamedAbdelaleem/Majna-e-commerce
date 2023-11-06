@@ -2,9 +2,9 @@
 A B2C e-commerce that enables Egyptian customers to buy brand-name products confidently from authorized distributors.
 
 ## Contets
-- ### [Requirements](#requirements)
-- ### [Data Models](#data-models)
-## Requirements
+- ### [Requirements](#requirements-section)
+- ### [Data Models](#data-models-section)
+## Requirements {#requirements-section}
 - the system should allow users to proceed as customers or sellers.
 - users can sign up/log in using their emails.
 - for a customer to place orders the system should store these information:
@@ -36,7 +36,7 @@ A B2C e-commerce that enables Egyptian customers to buy brand-name products conf
 - customers can filter products by price range,  brand name, or product availability
 - customers can sort products by price(low-to-high or high-to-low), average customers reviews, or featured
 
-## Data Models
+## Data Models {#data-models-section}
 
 User(id, email, password, phone_num, is_active, is_stuff, is_superuser)
 Customer(user_id)
