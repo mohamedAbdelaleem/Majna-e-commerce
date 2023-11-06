@@ -38,9 +38,9 @@ A B2C e-commerce that enables Egyptian customers to buy brand-name products conf
 
 ## Data Models 
 
-User(id, email, password, phone_num, is_active, is_stuff, is_superuser)
-Customer(user_id)
-Distributor(user_id)
+- User(id, email, password, phone_num, is_active, is_stuff, is_superuser)
+- Customer(user_id)
+- Distributor(user_id)
 
   
 
