@@ -1,0 +1,6 @@
+local_settings.py
+*.ruff_cache/
+*__pycache__/
+*migrations/
+
+t.py
