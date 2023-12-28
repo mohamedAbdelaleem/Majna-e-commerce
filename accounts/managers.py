@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 
 
@@ -34,16 +35,22 @@ class CustomUserManager(BaseUserManager):
     
 class DistributorManager(models.Manager):
     
-    def create_distributor_user(self, email, password, **extra_fields):
-        new_user = get_user_model().objects.create_user(email, password, **extra_fields)
-        new_distributor = self.model(user=new_user)
+    def create_distributor(self, user, **extra_fields):
+        new_distributor = self.model(user=user)
+        new_distributor.save()
+        distributor_group = Group.objects.get(name="Distributor")
+        user.groups.add(distributor_group)
+        user.save()
         return new_distributor
     
     
 class CustomerManager(models.Manager):
     
-    def create_customer_user(self, email, password, **extra_fields):
-        new_user = get_user_model().objects.create_user(email, password, **extra_fields)
-        new_customer = self.model(user=new_user)
+    def create_customer(self, user, **extra_fields):
+        new_customer = self.model(user=user)
+        new_customer.save()
+        customer_group = Group.objects.get(name="Customer")
+        user.groups.add(customer_group)
+        user.save()
         return new_customer
     

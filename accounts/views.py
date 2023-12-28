@@ -13,6 +13,7 @@ from knox.views import LoginView as knoxLoginView
 from knox.models import AuthToken
 from .utils import clean_email
 from .serializers import UserSerializer
+from .models import Customer, Distributor
 
 
 class LoginView(knoxLoginView):
@@ -48,6 +49,15 @@ class LoginView(knoxLoginView):
             data["user"] = UserSerializer(
                 user
             ).data
+        
+        role = ""
+        if user.is_customer():
+            role = "customer"
+        elif user.is_distributor():
+            role = "distributor"
+        
+        data["role"] = role
+
         return data
     
     def post(self, request):
@@ -75,7 +85,20 @@ class SignUpView(APIView):
         
         user = UserSerializer(data=request.data)
         user.is_valid(raise_exception=True)
-        user.save()
+
+        try:
+            role = request.data["role"]
+        except KeyError:
+            raise serializers.ValidationError(detail="role attribute is required")
+        
+        if role == "customer":
+            user = user.save()
+            Customer.objects.create_customer(user=user)
+        elif role == "distributor":
+            user = user.save()
+            Distributor.objects.create_distributor(user=user)
+        else:
+            raise serializers.ValidationError(detail="role is invalid")
 
         return Response(status=status.HTTP_201_CREATED)
 

@@ -20,6 +20,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
+    def is_customer(self) -> bool:
+        return self.groups.filter(name="Customer").exists()
+
+    def is_distributor(self) -> bool:
+        return self.groups.filter(name="Distributor").exists()
+
     def clean(self):
         super().clean()
         self.email = clean_email(self.email)
@@ -34,10 +40,15 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class Customer(models.Model):
     user = models.OneToOneField(
-        get_user_model(), on_delete=models.PROTECT)  # diff
+        get_user_model(), on_delete=models.PROTECT, primary_key=True
+    )  # diff
+
     objects = CustomerManager()
 
 
 class Distributor(models.Model):
-    user = models.OneToOneField(get_user_model(), on_delete=models.PROTECT)
+    user = models.OneToOneField(
+        get_user_model(), on_delete=models.PROTECT, primary_key=True
+    )
+
     objects = DistributorManager()

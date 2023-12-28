@@ -7,14 +7,6 @@ from .utils import clean_email
 
 
 class UserSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
-        validators=[
-            UniqueValidator(
-                queryset=get_user_model().objects.all(),
-                message="invalid email!",
-            )
-        ]
-    )
 
     class Meta:
         model = get_user_model()

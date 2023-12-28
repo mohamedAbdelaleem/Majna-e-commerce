@@ -1,15 +1,21 @@
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework.test import APITestCase
 from rest_framework import status
 
 
 class LoginTests(APITestCase):
-    def setUp(self):
-        self.user = get_user_model().objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create_user(
             email="test@test.com", password="12345aa"
         )
-        self.login_url = reverse("accounts:login")
+        cls.login_url = reverse("accounts:login")
+        customer_group = Group.objects.create(name="Customer")
+        cls.user.groups.add(customer_group)
+        cls.user.save()
+        
 
     def test_success_login(self):
         valid_data = {"email": self.user.email, "password": "12345aa"}
@@ -19,6 +25,7 @@ class LoginTests(APITestCase):
 
         self.assertIn("token", response.data)
         self.assertEqual(response.data["user"]["email"], self.user.email)
+        self.assertEqual(response.data["role"], "customer")
 
     def test_invalid_credentials_failure(self):
         invalid_data = {"email": "test12@test.com", "password": "12345aa"}
