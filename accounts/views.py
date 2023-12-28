@@ -87,7 +87,7 @@ class SignUpView(APIView):
         user.is_valid(raise_exception=True)
 
         try:
-            role = request.data["role"]
+            role = request.data["role"].lower()
         except KeyError:
             raise serializers.ValidationError(detail="role attribute is required")
         
