@@ -36,7 +36,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return get_user_model().objects.create_user(**validated_data)
-    
 
     def update(self, instance, validated_data):
         super().update(instance, validated_data)
@@ -45,13 +44,11 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
-
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(max_length=128)
 
     def validate(self, data):
-
         data["email"] = clean_email(data["email"])
         password = data["password"]
         email = data["email"]
@@ -60,14 +57,13 @@ class LoginSerializer(serializers.Serializer):
             if not user.check_password(password):
                 raise ValidationError("")
         except (ObjectDoesNotExist, ValidationError):
-            raise serializers.ValidationError({"detail": "Invalid email or password"})        
+            raise serializers.ValidationError({"detail": "Invalid email or password"})
 
         data["user"] = user
 
         return data
-    
+
     def save(self):
-        
         return self.validated_data["user"]
 
 
