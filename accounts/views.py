@@ -8,11 +8,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import serializers
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from knox.views import LoginView as knoxLoginView
 from knox.models import AuthToken
 from .utils import clean_email
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ChangePasswordSerializer
 from .models import Customer, Distributor
 
 
@@ -103,4 +103,19 @@ class SignUpView(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
 
+class ChangePasswordView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        request_data = ChangePasswordSerializer(data=request.data, context={"request":request})
+        request_data.is_valid(raise_exception=True)
+        new_password = request_data.validated_data["new_password"]
+
+        user = UserSerializer(request.user, data={"password":new_password}, partial=True)
+        user.is_valid(raise_exception=True)
+        user.save()
+
+        return Response()
 

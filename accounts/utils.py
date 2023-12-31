@@ -1,6 +1,3 @@
-from django.core.exceptions import ValidationError
-
-
 def clean_email(email: str):
     """Make the email insensitive"""
     email = email.lower()
@@ -12,4 +9,3 @@ def clean_email(email: str):
         pass
 
     return email
-
