@@ -1,7 +1,5 @@
 from django.contrib.auth.signals import user_logged_in
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -11,32 +9,14 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from knox.views import LoginView as knoxLoginView
 from knox.models import AuthToken
-from .utils import clean_email
-from .serializers import UserSerializer, ChangePasswordSerializer
+
+from .serializers import UserSerializer, ChangePasswordSerializer, LoginSerializer
 from .models import Customer, Distributor
 
 
 class LoginView(knoxLoginView):
 
     permission_classes = (AllowAny,)
-
-
-    def validate_credentials(self, request):
-        data = request.data
-        try:
-            email = data['email']
-            password = data['password']
-        except KeyError:
-            raise serializers.ValidationError({"detail": "Credentials were not provided"})        
-        email = clean_email(email)
-        try:
-            user = get_user_model().objects.get(email=email)
-            if not user.check_password(password):
-                raise ValidationError("")
-        except (ObjectDoesNotExist, ValidationError):
-            raise serializers.ValidationError({"detail": "Invalid email or password"})        
-
-        return user
 
     def get_post_response_data(self, user, token, instance):
         UserSerializer = self.get_user_serializer_class()
@@ -61,7 +41,11 @@ class LoginView(knoxLoginView):
         return data
     
     def post(self, request):
-        user = self.validate_credentials(request)
+
+        credentials = LoginSerializer(data=request.data)
+        credentials.is_valid(raise_exception=True)
+        user = credentials.save()
+        
         token_limit_per_user = self.get_token_limit_per_user()
         if token_limit_per_user is not None:
             now = timezone.now()
