@@ -8,15 +8,10 @@ from .utils import clean_email
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = [
-            "id",
-            "username",
-            "email",
-            "password",
-            "phone_num",
-        ]
+        fields = ["id", "username", "email", "password", "phone_num", "email_confirmed"]
         extra_kwargs = {
             "password": {"write_only": True},
+            "email_confirmed": {"read_only": True},
         }
 
     def validate_email(self, value):
@@ -67,7 +62,7 @@ class LoginSerializer(serializers.Serializer):
         return self.validated_data["user"]
 
 
-class ChangePasswordSerializer(serializers.Serializer):
+class PasswordChangeSerializer(serializers.Serializer):
     current_password = serializers.CharField(max_length=128)
     new_password = serializers.CharField(max_length=128)
     re_new_password = serializers.CharField(max_length=128)
@@ -78,7 +73,21 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Wrong password!")
         return value
 
+    def validate_new_password(self, value):
+        try:
+            validate_password(value)
+        except ValidationError as error:
+            raise serializers.ValidationError(detail=error.messages)
+
+        return value
+
     def validate(self, data):
         if data["new_password"] != data["re_new_password"]:
             raise serializers.ValidationError("new password mismatch")
         return data
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        new_password = self.validated_data["new_password"]
+        user.set_password(new_password)
+        user.save()

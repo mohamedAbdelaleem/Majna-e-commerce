@@ -124,6 +124,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication
 AUTH_USER_MODEL = "accounts.CustomUser"
+REQUIRE_EMAIL_CONFIRMATION = False
 
 # Rest Framework
 

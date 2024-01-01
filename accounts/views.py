@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from knox.views import LoginView as knoxLoginView
 from knox.models import AuthToken
 
-from .serializers import UserSerializer, ChangePasswordSerializer, LoginSerializer
+from .serializers import UserSerializer, PasswordChangeSerializer, LoginSerializer
 from .models import Customer, Distributor
 
 
@@ -81,16 +81,10 @@ class ChangePasswordView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
-        request_data = ChangePasswordSerializer(
+        serializer = PasswordChangeSerializer(
             data=request.data, context={"request": request}
         )
-        request_data.is_valid(raise_exception=True)
-        new_password = request_data.validated_data["new_password"]
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        user = UserSerializer(
-            request.user, data={"password": new_password}, partial=True
-        )
-        user.is_valid(raise_exception=True)
-        user.save()
-
-        return Response()
+        return Response(data={"message": "Password changed successfully"})
