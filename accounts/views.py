@@ -1,5 +1,6 @@
 from django.contrib.auth.signals import user_logged_in
 from django.utils import timezone
+from django.conf import settings
 
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -73,6 +74,9 @@ class SignUpView(APIView):
             Distributor.objects.create_distributor(user=user)
         else:
             raise serializers.ValidationError(detail="role is invalid")
+
+        if settings.REQUIRE_ACCOUNT_ACTIVATION:
+            user.send_account_activation_email()
 
         return Response(status=status.HTTP_201_CREATED)
 

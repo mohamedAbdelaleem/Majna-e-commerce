@@ -123,8 +123,10 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication
+
 AUTH_USER_MODEL = "accounts.CustomUser"
-REQUIRE_EMAIL_CONFIRMATION = False
+REQUIRE_ACCOUNT_ACTIVATION = True
+ACTIVATION_LINK = "https://google.com"
 
 # Rest Framework
 
@@ -137,3 +139,13 @@ REST_FRAMEWORK = {
 }
 
 REST_KNOX = local_settings.REST_KNOX
+
+# Email
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = local_settings.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = local_settings.EMAIL_HOST_PASSWORD
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
