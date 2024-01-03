@@ -5,14 +5,24 @@ from django.conf import settings
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework import serializers
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from knox.views import LoginView as knoxLoginView
 from knox.models import AuthToken
 
 from .serializers import UserSerializer, PasswordChangeSerializer, LoginSerializer
-from .models import Customer, Distributor
+
+
+class SignUpView(APIView):
+    def post(self, request: Request) -> Response:
+        user = UserSerializer(data=request.data)
+        user.is_valid(raise_exception=True)
+        user.save()
+
+        if settings.REQUIRE_ACCOUNT_ACTIVATION:
+            user.send_account_activation_email()
+
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class LoginView(knoxLoginView):
@@ -24,14 +34,6 @@ class LoginView(knoxLoginView):
         data = {"expiry": self.format_expiry_datetime(instance.expiry), "token": token}
         if UserSerializer is not None:
             data["user"] = UserSerializer(user).data
-
-        role = ""
-        if user.is_customer():
-            role = "customer"
-        elif user.is_distributor():
-            role = "distributor"
-
-        data["role"] = role
 
         return data
 
@@ -54,31 +56,6 @@ class LoginView(knoxLoginView):
         user_logged_in.send(sender=user.__class__, request=request, user=user)
         data = self.get_post_response_data(user, token, instance)
         return Response(data)
-
-
-class SignUpView(APIView):
-    def post(self, request: Request) -> Response:
-        user = UserSerializer(data=request.data)
-        user.is_valid(raise_exception=True)
-
-        try:
-            role = request.data["role"].lower()
-        except KeyError:
-            raise serializers.ValidationError(detail="role attribute is required")
-
-        if role == "customer":
-            user = user.save()
-            Customer.objects.create_customer(user=user)
-        elif role == "distributor":
-            user = user.save()
-            Distributor.objects.create_distributor(user=user)
-        else:
-            raise serializers.ValidationError(detail="role is invalid")
-
-        if settings.REQUIRE_ACCOUNT_ACTIVATION:
-            user.send_account_activation_email()
-
-        return Response(status=status.HTTP_201_CREATED)
 
 
 class ChangePasswordView(APIView):

@@ -125,7 +125,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Authentication
 
 AUTH_USER_MODEL = "accounts.CustomUser"
-REQUIRE_ACCOUNT_ACTIVATION = True
+REQUIRE_ACCOUNT_ACTIVATION = False
 ACTIVATION_LINK = "https://google.com"
 
 # Rest Framework
