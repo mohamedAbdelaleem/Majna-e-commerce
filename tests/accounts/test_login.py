@@ -11,7 +11,7 @@ class LoginTests(APITestCase):
         cls.user = get_user_model().objects.create_user(
             email="test@test.com", password="12345aa"
         )
-        cls.login_url = reverse("accounts:login")
+        cls.login_url = reverse("auth:login")
         customer_group = Group.objects.create(name="Customer")
         cls.user.groups.add(customer_group)
         cls.user.save()

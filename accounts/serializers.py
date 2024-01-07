@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from .models import Customer, Distributor
 from .utils import clean_email
@@ -74,29 +74,6 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(validated_data["password"])
             instance.save()
         return instance
-
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(max_length=128)
-
-    def validate(self, data):
-        data["email"] = clean_email(data["email"])
-        password = data["password"]
-        email = data["email"]
-        try:
-            user = get_user_model().objects.get(email=email)
-            if not user.check_password(password):
-                raise ValidationError("")
-        except (ObjectDoesNotExist, ValidationError):
-            raise serializers.ValidationError({"detail": "Invalid email or password"})
-
-        data["user"] = user
-
-        return data
-
-    def save(self):
-        return self.validated_data["user"]
 
 
 class PasswordChangeSerializer(serializers.Serializer):

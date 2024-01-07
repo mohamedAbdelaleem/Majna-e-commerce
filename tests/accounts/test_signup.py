@@ -9,7 +9,7 @@ from rest_framework import status
 class SignUpTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.url = reverse("accounts:signup")
+        cls.url = reverse("accounts:users")
         user = get_user_model().objects.create_user(
             email="test@test.com", username="test", password="12345aa"
         )

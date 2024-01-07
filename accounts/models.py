@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 
+
 from .managers import CustomerManager, CustomUserManager, DistributorManager
 from .utils import clean_email
 
@@ -31,11 +32,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def is_distributor(self) -> bool:
         return self.groups.filter(name="Distributor").exists()
 
-    def send_account_activation_email(self):
-        subject = "Account Activation"
-        activation_link = settings.ACTIVATION_LINK
+    def send_email_confirmation_email(self):
+        subject = "Email Confirmation"
+        confirmation_link = settings.confirmation_LINK
         html_message = render_to_string(
-            "account_activation.html", {"activation_link": activation_link}
+            "email_confirmation.html", {"confirmation_link": confirmation_link}
         )
         text_message = strip_tags(html_message)
 

@@ -11,7 +11,7 @@ class ChangePasswordTests(APITestCase):
         cls.user = get_user_model().objects.create_user(
             email="test@test.com", password="123"
         )
-        cls.url = reverse("accounts:change_password")
+        cls.url = reverse("accounts:change_password", kwargs={'pk':cls.user.pk})
         instance, cls.token = AuthToken.objects.create(user=cls.user)
 
     def setUp(self) -> None:
@@ -84,3 +84,16 @@ class ChangePasswordTests(APITestCase):
 
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_not_same_user_failure(self):
+
+        data = {
+            "current_password": "123",
+            "new_password": "123123aa",
+            "re_new_password": "123123aa",
+        }
+
+        url = reverse("accounts:change_password", kwargs={'pk':self.user.pk+1})
+        response = self.client.post(url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
