@@ -1,11 +1,3 @@
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-
-
-
-class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
-    pass
-
-
 def clean_email(email: str):
     """Make the email insensitive"""
     email = email.lower()

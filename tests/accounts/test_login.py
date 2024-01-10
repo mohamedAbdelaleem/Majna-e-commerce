@@ -9,7 +9,7 @@ class LoginTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = get_user_model().objects.create_user(
-            email="test@test.com", password="12345aa"
+            email="test@test.com", password="12345aa", email_confirmed=True
         )
         cls.login_url = reverse("auth:login")
         customer_group = Group.objects.create(name="Customer")
@@ -60,3 +60,20 @@ class LoginTests(APITestCase):
 
         self.assertIn("token", response.data)
         self.assertEqual(response.data["user"]["email"], self.user.email)
+    
+    def test_unconfirmed_email_failure(self):
+
+        user = get_user_model().objects.create_user(email="test2@test.com", password="123")
+
+        data = {
+            'email': user.email,
+            'password': '123'
+        }
+        
+        response = self.client.post(self.login_url, data=data)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertNotIn("token", response.data)
+
+
+

@@ -14,7 +14,6 @@ from accounts.serializers import UserSerializer
 from .serializers import PasswordChangeSerializer, LoginSerializer
 
 
-
 class SignUpView(APIView):
     def post(self, request: Request) -> Response:
         user = UserSerializer(data=request.data)
@@ -43,7 +42,11 @@ class LoginView(knoxLoginView):
         credentials = LoginSerializer(data=request.data)
         credentials.is_valid(raise_exception=True)
         user = credentials.save()
-
+        if not user.email_confirmed:
+            return Response(
+                data={"message": "Unconfirmed email address!"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         token_limit_per_user = self.get_token_limit_per_user()
         if token_limit_per_user is not None:
             now = timezone.now()

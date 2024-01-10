@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
-
+from django.contrib.auth.tokens import default_token_generator
 
 from .managers import CustomerManager, CustomUserManager, DistributorManager
 from .utils import clean_email
@@ -34,7 +34,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def send_email_confirmation_email(self):
         subject = "Email Confirmation"
-        confirmation_link = settings.confirmation_LINK
+        token = default_token_generator.make_token(user=self)
+        confirmation_link = settings.FRONTEND_BASE_URL + f"activate-account/{self.pk}/{token}"
         html_message = render_to_string(
             "email_confirmation.html", {"confirmation_link": confirmation_link}
         )

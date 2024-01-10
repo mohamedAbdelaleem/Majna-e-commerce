@@ -27,8 +27,8 @@ class ChangePasswordTests(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        user = get_user_model().objects.get(email=self.user.email)
-        check_new_password = user.check_password(data["new_password"])
+        self.user.refresh_from_db()
+        check_new_password = self.user.check_password(data["new_password"])
         self.assertTrue(check_new_password)
 
         # check hashing
@@ -44,6 +44,7 @@ class ChangePasswordTests(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        self.user.refresh_from_db()
         check_new_password = self.user.check_password(data["new_password"])
         self.assertFalse(check_new_password)
 
@@ -57,6 +58,7 @@ class ChangePasswordTests(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        self.user.refresh_from_db()
         check_new_password = self.user.check_password(data["new_password"])
         self.assertFalse(check_new_password)
 
@@ -70,6 +72,7 @@ class ChangePasswordTests(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        self.user.refresh_from_db()
         check_new_password = self.user.check_password(data["new_password"])
         self.assertFalse(check_new_password)
 

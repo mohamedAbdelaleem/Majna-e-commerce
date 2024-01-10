@@ -19,7 +19,7 @@ class LoginSerializer(serializers.Serializer):
                 raise ValidationError("")
         except (ObjectDoesNotExist, ValidationError):
             raise serializers.ValidationError({"detail": "Invalid email or password"})
-
+            
         data["user"] = user
 
         return data

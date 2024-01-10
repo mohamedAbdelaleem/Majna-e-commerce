@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from rest_framework import serializers
 from .models import Customer, Distributor
 from .utils import clean_email
@@ -58,7 +59,6 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        
         role = validated_data.pop("role")
         user = get_user_model().objects.create_user(**validated_data)
         if role == "customer":
@@ -105,3 +105,27 @@ class PasswordChangeSerializer(serializers.Serializer):
         new_password = self.validated_data["new_password"]
         user.set_password(new_password)
         user.save()
+
+
+class EmailConfirmationSerializer(serializers.Serializer):
+    token = serializers.CharField()
+
+    def validate(self, data):
+        user_pk = self.context["pk"]
+        try:
+            user = get_user_model().objects.get(pk=user_pk)
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError()
+
+        isvalid_token = default_token_generator.check_token(
+            user=user, token=data["token"]
+        )
+        if not isvalid_token:
+            raise serializers.ValidationError()
+
+        data["user"] = user
+        return data
+
+    def save(self, **kwargs):
+        user = self.validated_data["user"]
+        return user
