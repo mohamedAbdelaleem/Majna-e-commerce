@@ -126,6 +126,18 @@ class EmailConfirmationSerializer(serializers.Serializer):
         data["user"] = user
         return data
 
-    def save(self, **kwargs):
-        user = self.validated_data["user"]
-        return user
+
+class ResendConfirmationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, data):
+        email = clean_email(data["email"])
+
+        try:
+            user = get_user_model().objects.get(email=email)
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError()
+
+        data["user"] = user
+
+        return data

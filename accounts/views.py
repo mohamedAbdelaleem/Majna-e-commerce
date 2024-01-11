@@ -7,16 +7,12 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
-from .serializers import (
-    UserSerializer,
-    PasswordChangeSerializer,
-    EmailConfirmationSerializer,
-)
+from . import serializers as local_serializer
 
 
 class UsersView(APIView):
     def post(self, request: Request) -> Response:
-        user = UserSerializer(data=request.data)
+        user = local_serializer.UserSerializer(data=request.data)
         user.is_valid(raise_exception=True)
         user = user.save()
 
@@ -33,7 +29,7 @@ class PasswordChangeView(APIView):
         if kwargs["pk"] != request.user.pk:
             raise PermissionDenied("UnAuthorized user")
 
-        serializer = PasswordChangeSerializer(
+        serializer = local_serializer.PasswordChangeSerializer(
             data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
@@ -45,9 +41,11 @@ class PasswordChangeView(APIView):
 class EmailConfirmationView(APIView):
     def post(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
-        serializer = EmailConfirmationSerializer(data=request.data, context={"pk": pk})
+        serializer = local_serializer.EmailConfirmationSerializer(
+            data=request.data, context={"pk": pk}
+        )
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        user = serializer.validated_data["user"]
 
         if user.email_confirmed:
             return Response(
@@ -58,3 +56,14 @@ class EmailConfirmationView(APIView):
         user.save()
 
         return Response(data={"message": "Email Confirmed Successfully!"})
+
+
+class ResendEmailConfirmationView(APIView):
+    def post(self, request):
+        serializer = local_serializer.ResendConfirmationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            if not user.email_confirmed and settings.REQUIRE_ACCOUNT_ACTIVATION:
+                user.send_email_confirmation_email()
+
+        return Response(data={"message": "An Email is Sent if this is a valid email"})

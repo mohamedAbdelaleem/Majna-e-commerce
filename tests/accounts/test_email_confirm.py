@@ -7,7 +7,6 @@ from django.contrib.auth.tokens import default_token_generator
 
 class EmailConfirmationTests(APITestCase):
 
-    
     def setUp(self) -> None:
         self.user = get_user_model().objects.create_user(email="test@test.com", password="123")
         self.token = default_token_generator.make_token(user=self.user)
@@ -76,5 +75,27 @@ class EmailConfirmationTests(APITestCase):
         self.assertTrue(self.user.email_confirmed)
 
 
+class ResendConfirmationTests(APITestCase):
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.user = get_user_model().objects.create_user(email="test@test.com", password="123")
+        cls.url = reverse("accounts:resend_confirmation")
+    def test_resend(self):
+
+        data = {
+            "email": self.user.email
+        }
+
+        response = self.client.post(path=self.url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data["email"] = "test22@test.com"
+        response = self.client.post(path=self.url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data["email"] = "test22"
+        response = self.client.post(path=self.url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
