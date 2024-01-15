@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework.test import APITestCase
 from rest_framework import status
 from knox.models import AuthToken
@@ -100,3 +101,78 @@ class ChangePasswordTests(APITestCase):
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class PasswordResetEmailTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.user = get_user_model().objects.create_user(email="test@test.com", password="123")
+        cls.url = reverse("accounts:reset_password_email")
+    def test_reset_password_email(self):
+
+        data = {
+            "email": self.user.email
+        }
+
+        response = self.client.post(path=self.url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data["email"] = "test22@test.com"
+        response = self.client.post(path=self.url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data["email"] = "test22"
+        response = self.client.post(path=self.url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class PasswordResetTests(APITestCase):
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.user = get_user_model().objects.create_user(email="test@test.com", password="123")
+        cls.token = default_token_generator.make_token(user=cls.user)
+        cls.url = reverse("accounts:reset_password", kwargs={'pk':cls.user.pk})
+    
+
+    def test_success_password_reset(self):
+        data = {"token": self.token, "password": "12345aa"}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(data["password"]))
+
+
+    def test_invalid_token_failure(self):
+        data = {"token": self.token+"dsaf", "password": "12345aa"}
+        response = self.client.post(self.url, data=data)
+        is_failed = self.is_failed(response)
+        self.assertTrue(is_failed)
+
+    def test_invalid_pk_failure(self):
+        data = {"token": self.token, "password": "12345aa"}
+        url = reverse("accounts:reset_password", kwargs={'pk':self.user.pk+2})
+        response = self.client.post(url, data=data)
+        is_failed = self.is_failed(response)
+        self.assertTrue(is_failed)
+
+    def test_invalid_password_failure(self):
+        data = {"token": self.token+"dsaf", "password": "12345aa"}
+        response = self.client.post(self.url, data=data)
+        is_failed = self.is_failed(response)
+        self.assertTrue(is_failed)
+    
+
+    def is_failed(self, response): 
+        failed = True
+
+        if response.status_code != 400:
+            failed = False
+        old_password = self.user.password
+        self.user.refresh_from_db()
+        if old_password != self.user.password:
+            failed = False
+
+        return failed
+
+

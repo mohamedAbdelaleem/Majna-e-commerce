@@ -11,6 +11,16 @@ urlpatterns = [
         name="resend_confirmation",
     ),
     path(
+        "password-reset",
+        views.PasswordResetEmailView.as_view(),
+        name="reset_password_email",
+    ),
+    path(
+        "<int:pk>/password-reset",
+        views.PasswordResetView.as_view(),
+        name="reset_password",
+    ),
+    path(
         "<int:pk>/password-change",
         views.PasswordChangeView.as_view(),
         name="change_password",

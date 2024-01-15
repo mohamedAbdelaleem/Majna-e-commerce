@@ -30,9 +30,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_user_role(self, user_obj):
         role = None
-        if user_obj.is_customer():
+        if user_obj.is_customer:
             role = "customer"
-        elif user_obj.is_distributor():
+        elif user_obj.is_distributor:
             role = "distributor"
 
         return role
@@ -107,7 +107,7 @@ class PasswordChangeSerializer(serializers.Serializer):
         user.save()
 
 
-class EmailConfirmationSerializer(serializers.Serializer):
+class EmailTokenSerializer(serializers.Serializer):
     token = serializers.CharField()
 
     def validate(self, data):
@@ -127,7 +127,8 @@ class EmailConfirmationSerializer(serializers.Serializer):
         return data
 
 
-class ResendConfirmationSerializer(serializers.Serializer):
+
+class SendEmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate(self, data):

@@ -33,9 +33,8 @@ class SignUpTests(APITestCase):
             user = get_user_model().objects.get(email=data["email"])
             # check encryption
             self.assertNotEqual(user.password, data["password"])
+            self.assertTrue(user.is_customer)
             user_groups = user.groups.all()
-            is_customer = user_groups.filter(name="Customer").exists()
-            self.assertTrue(is_customer)
             num_of_groups = user_groups.count()
             self.assertEqual(num_of_groups, 1)
 
@@ -58,9 +57,8 @@ class SignUpTests(APITestCase):
             user = get_user_model().objects.get(email=data["email"])
             # check encryption
             self.assertNotEqual(user.password, data["password"])
+            self.assertTrue(user.is_distributor)
             user_groups = user.groups.all()
-            is_customer = user_groups.filter(name="Distributor").exists()
-            self.assertTrue(is_customer)
             num_of_groups = user_groups.count()
             self.assertEqual(num_of_groups, 1)
 

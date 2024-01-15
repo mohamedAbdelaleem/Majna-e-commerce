@@ -26,28 +26,40 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
+    @property
     def is_customer(self) -> bool:
         return self.groups.filter(name="Customer").exists()
 
+    @property
     def is_distributor(self) -> bool:
         return self.groups.filter(name="Distributor").exists()
+
+    def email_user(self, subject, message, from_email=None, **kwargs):
+        send_mail(subject, message, from_email, [self.email], **kwargs)
 
     def send_email_confirmation_email(self):
         subject = "Email Confirmation"
         token = default_token_generator.make_token(user=self)
-        confirmation_link = settings.FRONTEND_BASE_URL + f"activate-account/{self.pk}/{token}"
+        confirmation_link = (
+            settings.FRONTEND_BASE_URL + f"activate-account/{self.pk}/{token}"
+        )
         html_message = render_to_string(
             "email_confirmation.html", {"confirmation_link": confirmation_link}
         )
         text_message = strip_tags(html_message)
+        self.email_user(subject, text_message, html_message=html_message)
 
-        send_mail(
-            subject,
-            text_message,
-            from_email=None,
-            recipient_list=[self.email],
-            html_message=html_message,
+    def send_password_reset_email(self):
+        subject = "Password Reset"
+        token = default_token_generator.make_token(user=self)
+        password_reset_link = (
+            settings.FRONTEND_BASE_URL + f"reset-password/{self.pk}/{token}"
         )
+        html_message = render_to_string(
+            "password_Reset.html", {"password_reset_link": password_reset_link}
+        )
+        text_message = strip_tags(html_message)
+        self.email_user(subject, text_message, html_message=html_message)
 
     def clean(self):
         super().clean()

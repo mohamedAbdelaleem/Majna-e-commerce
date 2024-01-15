@@ -39,9 +39,9 @@ class PasswordChangeView(APIView):
 
 
 class EmailConfirmationView(APIView):
-    def post(self, request, *args, **kwargs):
+    def post(self, request, **kwargs):
         pk = kwargs.get("pk")
-        serializer = local_serializer.EmailConfirmationSerializer(
+        serializer = local_serializer.EmailTokenSerializer(
             data=request.data, context={"pk": pk}
         )
         serializer.is_valid(raise_exception=True)
@@ -60,10 +60,40 @@ class EmailConfirmationView(APIView):
 
 class ResendEmailConfirmationView(APIView):
     def post(self, request):
-        serializer = local_serializer.ResendConfirmationSerializer(data=request.data)
+        serializer = local_serializer.SendEmailSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             if not user.email_confirmed and settings.REQUIRE_ACCOUNT_ACTIVATION:
                 user.send_email_confirmation_email()
 
-        return Response(data={"message": "An Email is Sent if this is a valid email"})
+        return Response(data={"message": "An Email has been Sent if this is a valid email"})
+
+
+class PasswordResetEmailView(APIView):
+    def post(self, request):
+        serializer = local_serializer.SendEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            user.send_password_reset_email()
+        return Response(data={"message": "An Email has been Sent if this is a valid email"})
+
+
+class PasswordResetView(APIView):
+    def post(self, request, **kwargs):
+
+        serializer = local_serializer.EmailTokenSerializer(
+            data=request.data, context={"pk": kwargs["pk"]}
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+
+        if "password" not in request.data:
+            return Response(data={"message": "Password Required!"}, status=status.HTTP_400_BAD_REQUEST)
+        data = {"password": request.data["password"]}
+        user_serializer = local_serializer.UserSerializer(
+            user, data=data, partial=True
+        )
+        user_serializer.is_valid(raise_exception=True)
+        user_serializer.save()
+
+        return Response(data={"message": "Password reset Successfully"})
