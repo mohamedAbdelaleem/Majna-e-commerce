@@ -56,10 +56,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             settings.FRONTEND_BASE_URL + f"reset-password/{self.pk}/{token}"
         )
         html_message = render_to_string(
-            "password_Reset.html", {"password_reset_link": password_reset_link}
+            "password_reset.html", {"password_reset_link": password_reset_link}
         )
         text_message = strip_tags(html_message)
         self.email_user(subject, text_message, html_message=html_message)
+    
+    def activate_email(self):
+        self.email_confirmed = True
+        self.save()
 
     def clean(self):
         super().clean()

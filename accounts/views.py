@@ -75,7 +75,9 @@ class PasswordResetEmailView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             user.send_password_reset_email()
-        return Response(data={"message": "An Email has been Sent if this is a valid email"})
+            return Response(data={"message": "An Email has been Sent if this is a valid email"})
+        
+        return Response(data={"message": "Email not found!"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetView(APIView):
@@ -86,7 +88,8 @@ class PasswordResetView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
-
+        if not user.email_confirmed:
+            user.activate_email()
         if "password" not in request.data:
             return Response(data={"message": "Password Required!"}, status=status.HTTP_400_BAD_REQUEST)
         data = {"password": request.data["password"]}

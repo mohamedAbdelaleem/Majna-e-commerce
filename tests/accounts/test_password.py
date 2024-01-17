@@ -12,7 +12,7 @@ class ChangePasswordTests(APITestCase):
         cls.user = get_user_model().objects.create_user(
             email="test@test.com", password="123"
         )
-        cls.url = reverse("accounts:change_password", kwargs={'pk':cls.user.pk})
+        cls.url = reverse("accounts:change_password", kwargs={"pk": cls.user.pk})
         instance, cls.token = AuthToken.objects.create(user=cls.user)
 
     def setUp(self) -> None:
@@ -88,16 +88,15 @@ class ChangePasswordTests(APITestCase):
 
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
-    def test_not_same_user_failure(self):
 
+    def test_not_same_user_failure(self):
         data = {
             "current_password": "123",
             "new_password": "123123aa",
             "re_new_password": "123123aa",
         }
 
-        url = reverse("accounts:change_password", kwargs={'pk':self.user.pk+1})
+        url = reverse("accounts:change_password", kwargs={"pk": self.user.pk + 1})
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -106,34 +105,31 @@ class ChangePasswordTests(APITestCase):
 class PasswordResetEmailTests(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.user = get_user_model().objects.create_user(email="test@test.com", password="123")
+        cls.user = get_user_model().objects.create_user(
+            email="test@test.com", password="123"
+        )
         cls.url = reverse("accounts:reset_password_email")
+
     def test_reset_password_email(self):
-
-        data = {
-            "email": self.user.email
-        }
+        data = {"email": self.user.email}
 
         response = self.client.post(path=self.url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        data["email"] = "test22@test.com"
+    def test_invalid_email_failure(self):
+        data = {"email": "test22@test.com"}
         response = self.client.post(path=self.url, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        data["email"] = "test22"
-        response = self.client.post(path=self.url, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetTests(APITestCase):
-
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.user = get_user_model().objects.create_user(email="test@test.com", password="123")
+        cls.user = get_user_model().objects.create_user(
+            email="test@test.com", password="123"
+        )
         cls.token = default_token_generator.make_token(user=cls.user)
-        cls.url = reverse("accounts:reset_password", kwargs={'pk':cls.user.pk})
-    
+        cls.url = reverse("accounts:reset_password", kwargs={"pk": cls.user.pk})
 
     def test_success_password_reset(self):
         data = {"token": self.token, "password": "12345aa"}
@@ -142,28 +138,26 @@ class PasswordResetTests(APITestCase):
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password(data["password"]))
 
-
     def test_invalid_token_failure(self):
-        data = {"token": self.token+"dsaf", "password": "12345aa"}
+        data = {"token": self.token + "dsaf", "password": "12345aa"}
         response = self.client.post(self.url, data=data)
         is_failed = self.is_failed(response)
         self.assertTrue(is_failed)
 
     def test_invalid_pk_failure(self):
         data = {"token": self.token, "password": "12345aa"}
-        url = reverse("accounts:reset_password", kwargs={'pk':self.user.pk+2})
+        url = reverse("accounts:reset_password", kwargs={"pk": self.user.pk + 2})
         response = self.client.post(url, data=data)
         is_failed = self.is_failed(response)
         self.assertTrue(is_failed)
 
     def test_invalid_password_failure(self):
-        data = {"token": self.token+"dsaf", "password": "12345aa"}
+        data = {"token": self.token + "dsaf", "password": "12345aa"}
         response = self.client.post(self.url, data=data)
         is_failed = self.is_failed(response)
         self.assertTrue(is_failed)
-    
 
-    def is_failed(self, response): 
+    def is_failed(self, response):
         failed = True
 
         if response.status_code != 400:
@@ -175,4 +169,12 @@ class PasswordResetTests(APITestCase):
 
         return failed
 
-
+    def test_confirm_email(self):
+        """
+        Test User's email address confirmation in case of a valid token
+        and unconfirmed email address
+        """
+        data = {"token": self.token, "password": "1234"}
+        self.client.post(self.url, data=data)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_confirmed)
