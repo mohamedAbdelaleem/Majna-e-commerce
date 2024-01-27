@@ -1,6 +1,7 @@
-local_settings.py
+src/local_settings.py
+.vscode
 *.ruff_cache/
 *__pycache__/
-*migrations/
+
 
 t.py
