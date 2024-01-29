@@ -10,6 +10,9 @@ class Brand(models.Model):
         through_fields=("brand", "distributor"),
     )
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class BrandDistributors(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT)

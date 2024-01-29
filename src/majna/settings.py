@@ -137,7 +137,13 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-    ]
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
+    ],
+    'EXCEPTION_HANDLER': 'common.api.exception_handler.custom_exception_handler'
 }
 
 REST_KNOX = local_settings.REST_KNOX
@@ -154,3 +160,4 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Media
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024

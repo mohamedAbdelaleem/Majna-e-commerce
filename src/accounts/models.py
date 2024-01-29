@@ -84,6 +84,10 @@ class Customer(models.Model):
 
     objects = CustomerManager()
 
+    def save(self, *args, **kwargs):
+        self.id = self.user_id
+        super().save(*args, **kwargs)
+
 
 class Distributor(models.Model):
     user = models.OneToOneField(
@@ -91,3 +95,7 @@ class Distributor(models.Model):
     )
 
     objects = DistributorManager()
+
+    def save(self, *args, **kwargs):
+        self.id = self.user_id
+        super().save(*args, **kwargs)

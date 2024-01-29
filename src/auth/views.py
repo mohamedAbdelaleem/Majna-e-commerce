@@ -1,29 +1,15 @@
 from django.contrib.auth.signals import user_logged_in
 from django.utils import timezone
-from django.conf import settings
 
-from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from knox.views import LoginView as knoxLoginView
 from knox.models import AuthToken
 
-from accounts.serializers import UserSerializer
 from .serializers import PasswordChangeSerializer, LoginSerializer
-
-
-class SignUpView(APIView):
-    def post(self, request: Request) -> Response:
-        user = UserSerializer(data=request.data)
-        user.is_valid(raise_exception=True)
-        user.save()
-
-        if settings.REQUIRE_ACCOUNT_ACTIVATION:
-            user.send_email_confirmation_email()
-
-        return Response(status=status.HTTP_201_CREATED)
 
 
 class LoginView(knoxLoginView):
@@ -43,10 +29,7 @@ class LoginView(knoxLoginView):
         credentials.is_valid(raise_exception=True)
         user = credentials.save()
         if not user.email_confirmed:
-            return Response(
-                data={"message": "Unconfirmed email address!"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+            raise PermissionDenied("Unconfirmed email address!")
         token_limit_per_user = self.get_token_limit_per_user()
         if token_limit_per_user is not None:
             now = timezone.now()

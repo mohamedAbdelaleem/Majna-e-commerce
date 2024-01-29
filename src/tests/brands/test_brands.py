@@ -8,6 +8,7 @@ class BrandsTests(APITestCase):
     def test_retrieving_brands(self):
 
         url = reverse("brands:brands")
-        response = self.client.get(url)
+        response = self.client.get(path=url)
+        print(response)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertContains(response.data, "brands")
+        self.assertIn("brands", response.data)
