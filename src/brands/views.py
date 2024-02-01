@@ -39,8 +39,6 @@ class BrandApplications(APIView):
 
         service = BrandApplicationService()
         
-        authorization_doc=serializer.validated_data["authorization_doc"]
-        identity_doc=serializer.validated_data["identity_doc"]
         service.create(
             brand=brand,
             distributor_id=distributor_id,
