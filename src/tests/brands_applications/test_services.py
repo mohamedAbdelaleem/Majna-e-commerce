@@ -6,12 +6,13 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from brands.models import Brand
 from accounts.models import Distributor
-from brands_applications.models import BrandApplication
+from brands_applications.services import BrandApplicationService
 
 
 class BrandApplicationTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
+        
         cls.brand = Brand.objects.create(name="brand")
         cls.user = get_user_model().objects.create_user(
             email="test@test.com", password="123", email_confirmed=True
@@ -37,43 +38,43 @@ class BrandApplicationTests(TestCase):
         )
 
     def test_max_file_size_exceed_failure(self):
-        application = BrandApplication(
+        
+        application_service = BrandApplicationService()
+        with self.assertRaises(ValidationError):
+            application_service.create(
             distributor=self.distributor,
             brand=self.brand,
             authorization_doc=self.invalid_file_size,
             identity_doc=self.valid_file,
         )
 
+    
         with self.assertRaises(ValidationError):
-            application.full_clean()
-
-        application = BrandApplication(
+            application_service.create(
             distributor=self.distributor,
             brand=self.brand,
             authorization_doc=self.valid_file,
             identity_doc=self.invalid_file_size,
         )
-        with self.assertRaises(ValidationError):
-            application.full_clean()
 
 
     def test_invalid_file_format_failure(self):
-        application = BrandApplication(
+
+        application_service = BrandApplicationService()
+        with self.assertRaises(ValidationError):
+            application_service.create(
             distributor=self.distributor,
             brand=self.brand,
             authorization_doc=self.invalid_file_formate,
             identity_doc=self.valid_file,
         )
 
+        
         with self.assertRaises(ValidationError):
-            application.full_clean()
-
-        application = BrandApplication(
+            application_service.create(
             distributor=self.distributor,
             brand=self.brand,
             authorization_doc=self.valid_file,
             identity_doc=self.invalid_file_formate,
         )
-        with self.assertRaises(ValidationError):
-            application.full_clean()
 

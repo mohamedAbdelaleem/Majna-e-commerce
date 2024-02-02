@@ -1,14 +1,32 @@
+from django.core.files import File
+from django.conf import settings
 from brands.services import BrandSelector
 from common.api.exceptions import Conflict
+from common.validators import validate_file_format, validate_file_size
+from utils.storage import SupabaseStorageService
 from .models import BrandApplication
 
 
 class BrandApplicationService:
     def __init__(self) -> None:
         self.selector = BrandApplicationSelector()
+        self.supabase = SupabaseStorageService()
 
-    def create(self, **app_data) -> BrandApplication:
-        application = BrandApplication(**app_data)
+    def create(
+        self, authorization_doc: File, identity_doc: File, **app_data
+    ) -> BrandApplication:
+        
+        self._validate_document(authorization_doc)
+        self._validate_document(identity_doc)
+
+        auth_doc_filename = authorization_doc.name
+        identity_doc_filename = identity_doc.name
+
+        application = BrandApplication(
+            authorization_doc=auth_doc_filename,
+            identity_doc=identity_doc_filename,
+            **app_data,
+        )
         application.full_clean()
 
         if not self.selector.can_upload_application(
@@ -18,9 +36,19 @@ class BrandApplicationService:
                 "Can't upload due to current in progress application or the distributor already authorized for this brand"
             )
 
+
+        self.supabase.upload(authorization_doc.file, 'docs', application.authorization_doc)
+        self.supabase.upload(identity_doc.file, 'docs', application.identity_doc)
+
         application.save()
 
+
         return application
+
+    def _validate_document(self, doc: File):
+        size_limit = settings.FILE_UPLOAD_MAX_MEMORY_SIZE
+        validate_file_format(doc, ["pdf"])
+        validate_file_size(doc, size_limit)
 
 
 class BrandApplicationSelector:
