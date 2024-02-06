@@ -34,6 +34,8 @@ class UserSerializer(serializers.ModelSerializer):
             role = "customer"
         elif user_obj.is_distributor:
             role = "distributor"
+        elif user_obj.is_reviewer:
+            role = "reviewer"
 
         return role
 
