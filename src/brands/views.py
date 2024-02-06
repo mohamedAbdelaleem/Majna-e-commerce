@@ -2,7 +2,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework import serializers
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from common.api.permissions import DistributorsOnly
@@ -10,19 +9,24 @@ from brands_applications.serializers import BrandApplicationInputSerializer
 from brands_applications.services import BrandApplicationService
 from .models import Brand
 from . import services
+from .serializers import BrandOutSerializer
 
 
 class BrandsView(APIView):
-    class OutSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = Brand
-            fields = ["id", "name"]
 
     def get(self, request):
         brand_selector = services.BrandSelector()
         brands = brand_selector.brand_list()
-        data = self.OutSerializer(brands, many=True).data
+        data = BrandOutSerializer(brands, many=True, context={'request':request}).data
         data = {"brands": data}
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+
+class BrandView(APIView):
+    def get(self, request, **kwargs):
+        pk = kwargs['pk']
+        brand = get_object_or_404(Brand, pk=pk)
+        data = BrandOutSerializer(brand, context={'request':request}).data
         return Response(data=data, status=status.HTTP_200_OK)
 
 

@@ -11,6 +11,8 @@ psycopg = "*"
 psycopg2 = "*"
 django-rest-knox = "*"
 supabase = "*"
+factory-boy = "*"
+faker = "*"
 
 [dev-packages]
 

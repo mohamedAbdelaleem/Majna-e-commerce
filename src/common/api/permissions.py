@@ -7,4 +7,13 @@ class DistributorsOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        return request.user.is_distributor        
+        return request.user.is_distributor 
+
+
+class ReviewersOnly(permissions.BasePermission):
+
+    message = "Only Reviewers can perform this action"
+
+    def has_permission(self, request, view):
+
+        return request.user.is_reviewer        

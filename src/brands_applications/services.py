@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.core.files import File
 from django.conf import settings
 from brands.services import BrandSelector
@@ -15,7 +16,6 @@ class BrandApplicationService:
     def create(
         self, authorization_doc: File, identity_doc: File, **app_data
     ) -> BrandApplication:
-        
         self._validate_document(authorization_doc)
         self._validate_document(identity_doc)
 
@@ -36,12 +36,15 @@ class BrandApplicationService:
                 "Can't upload due to current in progress application or the distributor already authorized for this brand"
             )
 
-
-        self.supabase.upload(authorization_doc.file, 'docs', application.authorization_doc)
-        self.supabase.upload(identity_doc.file, 'docs', application.identity_doc)
+        file_options = {"content-type": "application/pdf"}
+        self.supabase.upload(
+            authorization_doc.file, "docs", application.authorization_doc, file_options
+        )
+        self.supabase.upload(
+            identity_doc.file, "docs", application.identity_doc, file_options
+        )
 
         application.save()
-
 
         return application
 
@@ -50,10 +53,24 @@ class BrandApplicationService:
         validate_file_format(doc, ["pdf"])
         validate_file_size(doc, size_limit)
 
+    def update_status(self, application: BrandApplication, status: str) -> None:
+
+        if application.status != "inprogress":
+            raise Conflict("This Application has been already reviewed")
+        
+        application.status = status
+        application.full_clean()
+        application.save()
+
 
 class BrandApplicationSelector:
     def __init__(self) -> None:
         self.brand_selector = BrandSelector()
+        self.supabase = SupabaseStorageService()
+
+    def brand_application_list(self, **filters):
+        result = BrandApplication.objects.filter(**filters)
+        return result
 
     def has_inprogress_applications(self, distributor_id, brand_id):
         has_inprogress_app = BrandApplication.objects.filter(
@@ -71,3 +88,8 @@ class BrandApplicationSelector:
         )
 
         return not has_inprogress_application and not currently_distributor
+
+    def get_document_url(self, path: str) -> str:
+        duration = timedelta(days=2).total_seconds()
+        url = self.supabase.get_url("docs", path, duration)
+        return url

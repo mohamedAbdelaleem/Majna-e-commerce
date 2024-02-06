@@ -1,4 +1,3 @@
-from datetime import timedelta
 from django.conf import settings
 from django.core.files import File
 from supabase import create_client
@@ -19,9 +18,12 @@ class SupabaseStorageService:
             file_content = f.read()
             self.client.storage.from_(bucket).upload(file=file_content, path=path, file_options=file_options)
     
-    def get_url(self, bucket, path):
-        duration = timedelta(days=2).total_seconds()
-        url = self.client.storage.from_(bucket).create_signed_url(path, duration)
+    def get_url(self, bucket, path, duration):
+        try:
+            response = self.client.storage.from_(bucket).create_signed_url(path, duration)
+            url = response['signedURL']
+        except:
+            url = None
         return url
 
 
