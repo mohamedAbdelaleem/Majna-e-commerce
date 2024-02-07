@@ -20,6 +20,7 @@ class BrandApplicationStatusSerializer(serializers.ModelSerializer):
 class BrandApplicationOutSerializer(serializers.ModelSerializer):
     authorization_doc = serializers.SerializerMethodField()
     identity_doc = serializers.SerializerMethodField()
+    brand = serializers.StringRelatedField()
     class Meta:
         model = BrandApplication
         fields = [
@@ -27,6 +28,7 @@ class BrandApplicationOutSerializer(serializers.ModelSerializer):
             "authorization_doc",
             "identity_doc",
             "brand_id",
+            "brand",
             "distributor_id",
             "request_date",
             "status",
