@@ -92,6 +92,8 @@ class Customer(models.Model):
         self.id = self.user_id
         super().save(*args, **kwargs)
 
+    def __str__(self) -> str:
+        return self.user.get_username()
 
 class Distributor(models.Model):
     user = models.OneToOneField(
@@ -103,3 +105,6 @@ class Distributor(models.Model):
     def save(self, *args, **kwargs):
         self.id = self.user_id
         super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.user.get_username()

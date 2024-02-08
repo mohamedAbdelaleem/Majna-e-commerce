@@ -1,7 +1,6 @@
 from django.db import models
 from brands.models import Brand
 from accounts.models import Distributor
-from utils.helpers import generate_unique_filepath
 from common.validators import validate_max_filename_length
 
 
@@ -22,7 +21,3 @@ class BrandApplication(models.Model):
     status = models.CharField(
         max_length=20, choices=BRAND_APPLICATION_CHOICES, default="inprogress"
     )
-
-    def clean(self) -> None:
-        self.authorization_doc = f"authorization_docs/{generate_unique_filepath(self.authorization_doc)}"
-        self.identity_doc = f"identity_docs/{generate_unique_filepath(self.identity_doc)}"

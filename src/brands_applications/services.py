@@ -5,6 +5,7 @@ from brands.services import BrandSelector
 from common.api.exceptions import Conflict
 from common.validators import validate_file_format, validate_file_size
 from utils.storage import SupabaseStorageService
+from utils.helpers import generate_dated_filepath, hash_filename
 from .models import BrandApplication
 
 
@@ -19,12 +20,14 @@ class BrandApplicationService:
         self._validate_document(authorization_doc)
         self._validate_document(identity_doc)
 
-        auth_doc_filename = authorization_doc.name
-        identity_doc_filename = identity_doc.name
+        hashed_authorization_filename = hash_filename(authorization_doc.name)
+        hashed_identity_filename = hash_filename(identity_doc.name)
+        auth_doc_filepath = f"authorization_docs/{generate_dated_filepath(hashed_authorization_filename)}"
+        identity_doc_filepath = f"identity_docs/{generate_dated_filepath(hashed_identity_filename)}"
 
         application = BrandApplication(
-            authorization_doc=auth_doc_filename,
-            identity_doc=identity_doc_filename,
+            authorization_doc=auth_doc_filepath,
+            identity_doc=identity_doc_filepath,
             **app_data,
         )
         application.full_clean()
