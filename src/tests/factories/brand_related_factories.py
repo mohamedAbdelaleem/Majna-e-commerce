@@ -1,5 +1,5 @@
 import factory
-from brands.models import Brand
+from brands.models import Brand, BrandDistributors
 from brands_applications.models import BrandApplication
 from utils.tests import faker
 
@@ -9,6 +9,13 @@ class BrandFactory(factory.django.DjangoModelFactory):
     
     name = factory.lazy_attribute(lambda _: faker.company())
 
+
+class BrandDistributorsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = BrandDistributors
+    
+    brand = factory.SubFactory(Brand)
+    authorize_date = factory.lazy_attribute(lambda _: faker.date_time_this_decade())
 
 
 # class DistributorFactory(factory.DjangoModelFactory):
