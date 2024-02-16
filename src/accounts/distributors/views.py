@@ -9,7 +9,7 @@ from brands_applications.services import BrandApplicationSelector
 from brands_applications.serializers import BrandApplicationListOutSerializer
 
 
-class DistributorBrandListView(APIView):
+class DistributorBrandsView(APIView):
     permission_classes = [IsAuthenticated, DistributorsOnly]
 
     def get(self, request, **kwargs):
@@ -26,7 +26,7 @@ class DistributorBrandListView(APIView):
         return Response(data)
 
 
-class DistributorBrandApplicationListView(APIView):
+class DistributorBrandApplicationsView(APIView):
     permission_classes = [IsAuthenticated, DistributorsOnly]
 
     def get(self, request, **kwargs):

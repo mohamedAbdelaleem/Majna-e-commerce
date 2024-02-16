@@ -4,6 +4,7 @@ A B2C e-commerce that enables Egyptian customers to buy brand-name products conf
 ## Contets
 - [Requirements](#requirements)
 - [Database Design](#database-design)
+- [API design](#api-design)
 ## Requirements
 - the system should allow users to proceed as customers or sellers.
 - users can sign up/log in using their emails.
@@ -40,5 +41,6 @@ A B2C e-commerce that enables Egyptian customers to buy brand-name products conf
 
 ![Models](https://github.com/mohamedAbdelaleem/Majna_e-commerce/blob/main/Majnadb-design.png)
 
-
+## API Design
+![Diagram](https://github.com/mohamedAbdelaleem/Majna_e-commerce/blob/main/Majna-API-endpoints.png)
 

@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.core.files import File
 from django.conf import settings
-from brands.services import BrandSelector
+from brands.services import BrandSelector, BrandService
 from common.api.exceptions import Conflict
 from common.validators import validate_file_format, validate_file_size
 from utils.storage import SupabaseStorageService
@@ -12,6 +12,7 @@ from .models import BrandApplication
 class BrandApplicationService:
     def __init__(self) -> None:
         self.selector = BrandApplicationSelector()
+        self.brand_service = BrandService()
         self.supabase = SupabaseStorageService()
 
     def create(
@@ -64,6 +65,8 @@ class BrandApplicationService:
         application.status = status
         application.full_clean()
         application.save()
+        if application.status == 'approved':
+            self.brand_service.add_distributor(application.brand, application.distributor)
 
 
 class BrandApplicationSelector:

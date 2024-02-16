@@ -55,6 +55,10 @@ class UpdateBrandApplicationForReviewingTests(APITestCase):
         self.application.refresh_from_db()
         self.assertEqual(self.application.status, "approved")
 
+        brand = self.application.brand
+        distributor_exists = brand.distributors.filter(pk=self.distributor.pk).exists()
+        self.assertTrue(distributor_exists)
+
     def test_success_reject_update(self):
 
         response = self.client.patch(self.url, data=self.rejected_update_data)
@@ -62,6 +66,10 @@ class UpdateBrandApplicationForReviewingTests(APITestCase):
 
         self.application.refresh_from_db()
         self.assertEqual(self.application.status, "rejected")
+
+        brand = self.application.brand
+        distributor_exists = brand.distributors.filter(pk=self.distributor.pk).exists()
+        self.assertFalse(distributor_exists)
 
     def test_already_reviewed_failure(self):
         application = BrandApplicationFactory.create(distributor=self.distributor)

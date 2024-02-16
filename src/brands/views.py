@@ -30,7 +30,7 @@ class BrandView(APIView):
         return Response(data=data, status=status.HTTP_200_OK)
 
 
-class BrandApplications(APIView):
+class BrandApplicationsView(APIView):
     permission_classes = [IsAuthenticated, DistributorsOnly]
     parser_classes = [MultiPartParser, FormParser]
 
