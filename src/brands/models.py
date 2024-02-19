@@ -3,7 +3,7 @@ from accounts.models import Distributor
 
 
 class Brand(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     distributors = models.ManyToManyField(
         Distributor,
         through="BrandDistributors",
