@@ -1,11 +1,8 @@
-from faker import Faker
 from django.contrib.auth.models import Group, AbstractBaseUser
 from django.contrib.auth import get_user_model
 from knox.models import AuthToken
 from accounts.models import Distributor, Customer
 
-
-faker = Faker()
 
 def create_groups() -> None:
     Group.objects.get_or_create(name="Customer")

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'accounts',
     'brands',
     'brands_applications',
+    'stores',
 ]
 
 MIDDLEWARE = [
