@@ -3,7 +3,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from brands_applications.services import BrandApplicationSelector
 from tests.factories.brand_related_factories import BrandApplicationFactory
-from utils.tests import (
+from tests.factories.auth_factories import (
     create_customer,
     create_distributor,
     create_reviewer,

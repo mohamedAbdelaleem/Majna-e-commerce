@@ -1,7 +1,9 @@
 import factory
+from faker import Faker
 from brands.models import Brand, BrandDistributors
 from brands_applications.models import BrandApplication
-from tests.factories.auth_factories import faker
+
+faker = Faker()
 
 class BrandFactory(factory.django.DjangoModelFactory):
     class Meta:

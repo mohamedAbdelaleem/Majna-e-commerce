@@ -6,7 +6,7 @@ from tests.factories.brand_related_factories import (
     BrandFactory,
     BrandDistributorsFactory,
 )
-from utils.tests import (
+from tests.factories.auth_factories import (
     create_customer,
     create_distributor,
     create_reviewer,

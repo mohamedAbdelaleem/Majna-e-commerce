@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 from brands.models import Brand
-from utils.tests import (
+from tests.factories.auth_factories import (
     create_customer,
     create_distributor,
     create_reviewer,
