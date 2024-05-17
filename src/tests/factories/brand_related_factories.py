@@ -9,7 +9,7 @@ class BrandFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Brand
     
-    name = factory.lazy_attribute(lambda _: faker.company())
+    name = factory.Sequence(lambda n: f"brand_{n}")
 
 
 class BrandDistributorsFactory(factory.django.DjangoModelFactory):
@@ -29,5 +29,3 @@ class BrandApplicationFactory(factory.django.DjangoModelFactory):
     authorization_doc = factory.lazy_attribute(lambda _:faker.file_name(extension='pdf'))  
     identity_doc = factory.lazy_attribute(lambda _:faker.file_name(extension='pdf'))  
     request_date = factory.lazy_attribute(lambda _: faker.date_time_this_decade())
-
-    status = 'inprogress'
