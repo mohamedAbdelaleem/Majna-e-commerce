@@ -29,17 +29,6 @@ class CreateBrandApplicationTests(APITestCase):
             content_type="application/pdf",
         )
 
-        cls.invalid_file_size = SimpleUploadedFile(
-            name="name.pdf",
-            content=b"A" * (settings.FILE_UPLOAD_MAX_MEMORY_SIZE + 1),
-            content_type="application/pdf",
-        )
-        cls.invalid_file_formate = SimpleUploadedFile(
-            name="name.text",
-            content=b"A" * settings.FILE_UPLOAD_MAX_MEMORY_SIZE,
-            content_type="text/plain",
-        )
-
         cls.valid_data = {
             "authorization_doc": cls.valid_file,
             "identity_doc": cls.valid_file,
@@ -48,7 +37,7 @@ class CreateBrandApplicationTests(APITestCase):
     def setUp(self) -> None:
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
 
-    def test_unauthorized_user_failure(self):
+    def test_unauthenticated_user_failure(self):
         self.client.credentials()
         data = self.valid_data
         response = self.client.post(
@@ -56,7 +45,7 @@ class CreateBrandApplicationTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_non_distributor_failure(self):
+    def test_unauthorized_user_failure(self):
         customer = create_customer(email="test2@test.com")
         token = generate_auth_token(user=customer.user)
 

@@ -62,8 +62,8 @@ class BrandApplicationOutSerializer(serializers.ModelSerializer):
 class BrandApplicationListOutSerializer(serializers.ModelSerializer):
     """
     Serializer for Brand Application without considering identity_doc 
-    and identity_doc to reduce external calls. This Serializer is usually
-    for brand application List.
+    and identity_doc to reduce external calls to the Storage service.
+    This Serializer is for brand application List.
     """
 
     brand = serializers.StringRelatedField()

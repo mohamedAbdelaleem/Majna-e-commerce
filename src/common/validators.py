@@ -9,7 +9,7 @@ def validate_file_size(file, max_size):
 def validate_file_format(file, allowed_formats: List[str]):
     file_ext = file.name.split('.')[-1].lower()
     if file_ext not in allowed_formats:
-        raise ValidationError("File must be pdf")
+        raise ValidationError(f"File must be either: {', '.join(allowed_formats)}")
     
 
 def validate_max_filename_length(filename):
