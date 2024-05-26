@@ -39,8 +39,8 @@ A B2C e-commerce that enables Egyptian customers to buy brand-name products conf
 
 ## Database Design
 
-![Models](https://github.com/mohamedAbdelaleem/Majna_e-commerce/blob/main/Majnadb-design.png)
+![Models](https://github.com/mohamedAbdelaleem/Majna_e-commerce/blob/main/Majnadb_design.png)
 
 ## API Design
-![Diagram](https://github.com/mohamedAbdelaleem/Majna_e-commerce/blob/main/Majna-API-endpoints.png)
+![Diagram](https://github.com/mohamedAbdelaleem/Majna_e-commerce/blob/main/Majna_API-endpoints.png)
 
