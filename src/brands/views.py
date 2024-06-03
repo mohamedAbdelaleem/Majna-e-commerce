@@ -12,7 +12,7 @@ from . import services
 from .serializers import BrandOutSerializer
 
 
-class BrandsView(APIView):
+class BrandListView(APIView):
 
     def get(self, request):
         brand_selector = services.BrandSelector()
@@ -22,7 +22,7 @@ class BrandsView(APIView):
         return Response(data=data, status=status.HTTP_200_OK)
     
 
-class BrandView(APIView):
+class BrandDetailView(APIView):
     def get(self, request, **kwargs):
         pk = kwargs['pk']
         brand = get_object_or_404(Brand, pk=pk)
@@ -30,7 +30,7 @@ class BrandView(APIView):
         return Response(data=data, status=status.HTTP_200_OK)
 
 
-class BrandApplicationsView(APIView):
+class BrandApplicationCreateView(APIView):
     permission_classes = [IsAuthenticated, DistributorsOnly]
     parser_classes = [MultiPartParser, FormParser]
 

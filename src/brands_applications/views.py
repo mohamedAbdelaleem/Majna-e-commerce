@@ -13,7 +13,7 @@ from .serializers import (
 )
 
 
-class BrandsApplications(APIView):
+class BrandApplicationListView(APIView):
     permission_classes = [IsAuthenticated, ReviewersOnly]
 
     def get(self, request):
@@ -30,7 +30,7 @@ class BrandsApplications(APIView):
         return paginated_response
 
 
-class BrandApplication(APIView):
+class BrandApplicationDetailUpdateView(APIView):
     permission_classes = [IsAuthenticated, ReviewersOnly]
 
     def get(self, request, **kwargs):

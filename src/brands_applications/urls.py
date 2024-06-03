@@ -5,7 +5,7 @@ app_name = 'brand_applications'
 
 
 urlpatterns = [
-    path('', views.BrandsApplications().as_view(), name='brand_applications'),
-    path('<int:pk>', views.BrandApplication().as_view(), name='brand_application')
+    path('', views.BrandApplicationListView().as_view(), name='brand_applications'),
+    path('<int:pk>', views.BrandApplicationDetailUpdateView().as_view(), name='brand_application')
 ]
 

@@ -16,8 +16,8 @@ class InventoryInputSerializer(serializers.ModelSerializer):
 
 
 class ProductInputSerializer(serializers.ModelSerializer):
-    album = AlbumItemInputSerializer(many=True)
-    inventory = InventoryInputSerializer(many=True)
+    album = serializers.ListField(child=AlbumItemInputSerializer())
+    inventory = serializers.ListField(child=InventoryInputSerializer())
     brand_pk = serializers.IntegerField(min_value=1)    # Not PrimaryKeyRelatedField. Validations are applied in the product service to ensure that the distributor has an authorization
     sub_category_pk = serializers.PrimaryKeyRelatedField(
         queryset=models.SubCategory.objects.all(), source='sub_category', write_only=True
@@ -34,3 +34,15 @@ class ProductInputSerializer(serializers.ModelSerializer):
             "album",
             "inventory",
         ]
+
+
+class CategoryOutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Category
+        fields = ["id", "name"]
+
+
+class SubCategoryOutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SubCategory
+        fields = ["id", "name", "category_id"]
