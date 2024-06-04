@@ -19,6 +19,8 @@ class MultipartJsonParser(MultiPartParser):
             else:
                 data[key] = value
         # add files to album
+        if "album" not in data:
+            raise ValidationError("Missing album")
         for item in data["album"]:
             image_key = item["image"]
             if image_key not in result.files:
