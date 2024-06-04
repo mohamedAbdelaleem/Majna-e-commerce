@@ -171,6 +171,15 @@ class AddProductTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_missing_image_failure(self):
+        data = self.data.copy()
+        data["album"] = [[{"image": "image-1", "is_cover": "False"}]]
+        del data["image-1"]
+        response = self.client.post(
+            self.url, data=data, media_type="multipart/form-data"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_missing_album_failure(self):
         data = self.data.copy()
         data["album"] = [[]]

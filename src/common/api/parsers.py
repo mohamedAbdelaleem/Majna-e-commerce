@@ -1,5 +1,6 @@
 import json
 from rest_framework.parsers import MultiPartParser, DataAndFiles
+from rest_framework.exceptions import ValidationError
 
 
 class MultipartJsonParser(MultiPartParser):
@@ -19,7 +20,10 @@ class MultipartJsonParser(MultiPartParser):
                 data[key] = value
         # add files to album
         for item in data["album"]:
-            item["image"] = result.files[item["image"]]
+            image_key = item["image"]
+            if image_key not in result.files:
+                raise ValidationError(f"{image_key} file missing!")
+            item["image"] = result.files[image_key]
 
         return DataAndFiles(data, result.files)
 
