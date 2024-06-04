@@ -187,6 +187,11 @@ class AddProductTests(APITestCase):
             self.url, data=data, media_type="multipart/form-data"
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        del data["album"]
+        response = self.client.post(
+            self.url, data=data, media_type="multipart/form-data"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_negative_values_failure(self):
         data = self.data.copy()
