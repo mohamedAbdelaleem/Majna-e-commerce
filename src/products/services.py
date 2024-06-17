@@ -1,7 +1,10 @@
 from typing import List, Dict
+from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Subquery
 from django.conf import settings
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.exceptions import PermissionDenied
 from brands.services import BrandSelector
 from utils.storage import SupabaseStorageService
@@ -9,6 +12,7 @@ from utils.helpers import generate_dated_filepath
 from common.validators import validate_file_format, validate_file_size
 from stores import models as store_models
 from . import models as product_models
+
 
 MAX_ALBUM_ITEMS = 3
 
@@ -19,7 +23,6 @@ class ProductService:
         self.brand_selector = BrandSelector()
 
     def create(self, product_data: Dict, distributor_pk) -> product_models.Product:
-        print(product_data)
         is_authorized = self.brand_selector.has_distributor(
             product_data["brand_pk"], distributor_pk
         )
@@ -32,7 +35,7 @@ class ProductService:
 
         with transaction.atomic():
             product = product_models.Product.objects.create(
-                title=product_data["title"],
+                name=product_data["name"],
                 description=product_data["description"],
                 price=product_data["price"],
                 sub_category=product_data["sub_category"],
@@ -96,3 +99,53 @@ class ProductService:
 
         if stores_num != len(stores):
             raise ValidationError("Invalid stores provided")
+
+
+class ProductSelector:
+    def __init__(self):
+        self.supabase = SupabaseStorageService()
+
+    def product_list(self, search: str = None, ordering: List[str] = None, **filters):
+        products = product_models.Product.objects.filter(**filters)
+        if search:
+            search_str = search.replace(" ", " | ")
+            query = SearchQuery(search_str, search_type="raw")
+            vector = SearchVector("name", "description", config="english")
+            search_result = (
+                products.annotate(search=vector).filter(search=query).values("id")
+            )
+
+            rank_vector = SearchVector("name", weight="A") + SearchVector(
+                "description", weight="B"
+            )
+            rank = SearchRank(rank_vector, query, weights=[0.2, 0.4, 0.6, 0.8])
+            products = (
+                product_models.Product.objects.filter(id__in=Subquery(search_result))
+                .annotate(rank=rank)
+                .filter(rank__gte=0.3)
+                .order_by("-rank")
+            )
+
+        if ordering:
+            products = products.order_by(*ordering)
+
+        return products
+
+    def category_product_list(self, category_pk: int, **filters):
+        sub_categories = product_models.SubCategory.objects.filter(
+            category_id=category_pk
+        ).values("id")
+        return self.product_list(
+            sub_category_id__in=Subquery(sub_categories), **filters
+        )
+
+    def get_cover_image_url(self, product_pk):
+        cover_image = product_models.AlbumItem.objects.get(
+            product_id=product_pk, is_cover=True
+        )
+        return self.get_image_url(cover_image.img_url)
+
+    def get_image_url(self, path: str) -> str:
+        duration = timedelta(days=2).total_seconds()
+        url = self.supabase.get_url("images", path, duration)
+        return url

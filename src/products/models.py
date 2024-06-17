@@ -1,19 +1,20 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from stores.models import Store
 from brands.models import Brand
-from common.validators import validate_max_filename_length
 
 
 class Category(models.Model):
-    name = models.CharField()
+    name = models.CharField(unique=True)
 
     def __str__(self) -> str:
         return self.name
 
 
 class SubCategory(models.Model):
-    name = models.CharField()
+    name = models.CharField(unique=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
 
     def __str__(self) -> str:
@@ -21,7 +22,7 @@ class SubCategory(models.Model):
 
 
 class Product(models.Model):
-    title = models.CharField()
+    name = models.CharField()
     description = models.TextField()
     price = models.DecimalField(
         max_digits=7, decimal_places=2, validators=[MinValueValidator(1)]
@@ -31,8 +32,17 @@ class Product(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
     stores = models.ManyToManyField(Store, through="Inventory")
 
+    class Meta:
+        indexes = [
+            GinIndex(
+                SearchVector("name", "description", config="english"),
+                name="search_vector_idx",
+            ),
+            models.Index(fields=['price'], name='price_idx')
+        ]
+
     def __str__(self) -> str:
-        return self.title
+        return self.name
 
 
 class Inventory(models.Model):
@@ -49,7 +59,7 @@ class Inventory(models.Model):
 
 
 class AlbumItem(models.Model):
-    img_url = models.CharField(validators=[validate_max_filename_length])
+    img_url = models.CharField()
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     is_cover = models.BooleanField(default=False)
     added_at = models.DateTimeField(auto_now_add=True)

@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from common.api.permissions import ReviewersOnly
-from common.api.paginator import paginator
+from common.api.paginator import PagePagination
 from .models import BrandApplication as BrandApplicationModel
 from .services import BrandApplicationSelector, BrandApplicationService
 from .serializers import (
@@ -20,6 +20,7 @@ class BrandApplicationListView(APIView):
         selector = BrandApplicationSelector()
         applications = selector.brand_application_list(status="inprogress")
 
+        paginator = PagePagination()
         data = paginator.paginate_queryset(applications, request)
         data = BrandApplicationListOutSerializer(
             data, many=True, context={"request": request}

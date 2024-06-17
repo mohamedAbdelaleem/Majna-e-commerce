@@ -1,7 +1,6 @@
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
-from django.utils.datastructures import MultiValueDict
 from rest_framework.test import APITestCase
 from rest_framework import status
 from products.services import MAX_ALBUM_ITEMS
@@ -58,7 +57,7 @@ class AddProductTests(APITestCase):
             content_type="application/pdf",
         )
         cls.data = {
-            "title": ["title"],
+            "name": ["name"],
             "description": ["description"],
             "price": [12.3],
             "sub_category_pk": [cls.sub_category.pk],

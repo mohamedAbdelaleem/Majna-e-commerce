@@ -5,4 +5,5 @@ class PagePagination(PageNumberPagination):
     page_size = 12
 
 
-paginator = PagePagination()
+class ProductPagination(PageNumberPagination):
+    page_size = 12
