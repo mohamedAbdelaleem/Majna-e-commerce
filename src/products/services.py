@@ -112,7 +112,7 @@ class ProductSelector:
             query = SearchQuery(search_str, search_type="raw")
             vector = SearchVector("name", "description", config="english")
             search_result = (
-                products.annotate(search=vector).filter(search=query).values("id")
+                product_models.Product.objects.annotate(search=vector).filter(search=query).values("id")
             )
 
             rank_vector = SearchVector("name", weight="A") + SearchVector(
@@ -120,13 +120,15 @@ class ProductSelector:
             )
             rank = SearchRank(rank_vector, query, weights=[0.2, 0.4, 0.6, 0.8])
             products = (
-                product_models.Product.objects.filter(id__in=Subquery(search_result))
+                products.filter(id__in=search_result)
                 .annotate(rank=rank)
                 .filter(rank__gte=0.3)
                 .order_by("-rank")
             )
+            if ordering:
+                products.order_by(*ordering, "-rank")
 
-        if ordering:
+        elif ordering:
             products = products.order_by(*ordering)
 
         return products

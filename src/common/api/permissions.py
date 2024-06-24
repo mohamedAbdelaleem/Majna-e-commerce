@@ -16,4 +16,14 @@ class ReviewersOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        return request.user.is_reviewer        
+        return request.user.is_reviewer
+
+class CustomersOnly(permissions.BasePermission):
+
+    message = "Only Customers can perform this action"
+
+    def has_permission(self, request, view):
+
+        return request.user.is_customer
+
+      
