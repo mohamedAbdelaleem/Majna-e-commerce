@@ -100,6 +100,29 @@ class ProductService:
         if stores_num != len(stores):
             raise ValidationError("Invalid stores provided")
 
+    def bulk_add_to_favorite(self, product_ids: List[int], customer_pk: int):
+        exist_items = product_models.FavoriteItem.objects.filter(
+            product_id__in=product_ids
+        ).values("product_id")
+        exist_items = [r["product_id"] for r in exist_items]
+        product_ids = set(product_ids).difference(set(exist_items))
+        items = []
+        for pk in product_ids:
+            item = product_models.FavoriteItem(product_id=pk, customer_id=customer_pk)
+            item.full_clean()
+            items.append(item)
+        product_models.FavoriteItem.objects.bulk_create(items)
+
+    def add_to_favorite(self, product_id: int, customer_id: int):
+        favorite_item = product_models.FavoriteItem(
+            product_id=product_id, customer_id=customer_id
+        )
+        favorite_item.full_clean()
+        favorite_item.save()
+
+    def remove_from_favorite(self, favorite_item: product_models.FavoriteItem):
+        favorite_item.delete()
+
 
 class ProductSelector:
     def __init__(self):
@@ -112,7 +135,9 @@ class ProductSelector:
             query = SearchQuery(search_str, search_type="raw")
             vector = SearchVector("name", "description", config="english")
             search_result = (
-                product_models.Product.objects.annotate(search=vector).filter(search=query).values("id")
+                product_models.Product.objects.annotate(search=vector)
+                .filter(search=query)
+                .values("id")
             )
 
             rank_vector = SearchVector("name", weight="A") + SearchVector(
@@ -151,3 +176,7 @@ class ProductSelector:
         duration = timedelta(days=2).total_seconds()
         url = self.supabase.get_url("images", path, duration)
         return url
+
+    def favorite_item_list(self, **filters):
+        items = product_models.FavoriteItem.objects.filter(**filters)
+        return items

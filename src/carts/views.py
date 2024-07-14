@@ -5,7 +5,11 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from common.api.permissions import CustomersOnly
-from .serializers import CartItemInputSerializer, CartItemOutSerializer, CartItemUpdateInputSerializer
+from .serializers import (
+    CartItemInputSerializer,
+    CartItemOutSerializer,
+    CartItemUpdateInputSerializer,
+)
 from .services import CartItemService, CartItemSelector
 from .models import CartItem
 
@@ -33,9 +37,7 @@ class CartItemListCreate(APIView):
     def get(self, request, **kwargs):
         customer_pk = kwargs["pk"]
         if request.user.pk != customer_pk:
-            raise PermissionDenied(
-                "Can't access cart Items of another user"
-            )
+            raise PermissionDenied("Can't access cart Items of another user")
 
         selector = CartItemSelector()
         cart_items = selector.cart_item_list()
@@ -47,18 +49,19 @@ class CartItemListCreate(APIView):
 
         return Response(data=data, status=status.HTTP_200_OK)
 
+
 class CartItemDetail(APIView):
     permission_classes = [IsAuthenticated, CustomersOnly]
 
     def get(self, request, **kwargs):
         customer_pk = kwargs["pk"]
         if request.user.pk != customer_pk:
-            raise PermissionDenied(
-                "Can't access cart Item of another user"
-            )
+            raise PermissionDenied("Can't access cart Item of another user")
 
-        cart_item_pk = kwargs['cart_item_pk']
-        cart_item = get_object_or_404(CartItem, pk=cart_item_pk, customer_id=customer_pk)
+        cart_item_pk = kwargs["cart_item_pk"]
+        cart_item = get_object_or_404(
+            CartItem, pk=cart_item_pk, customer_id=customer_pk
+        )
         serializer = CartItemOutSerializer(
             instance=cart_item, context={"request": request}
         )
@@ -69,38 +72,30 @@ class CartItemDetail(APIView):
     def patch(self, request, **kwargs):
         customer_pk = kwargs["pk"]
         if request.user.pk != customer_pk:
-            raise PermissionDenied(
-                "Can't access cart Item of another user"
-            )
+            raise PermissionDenied("Can't access cart Item of another user")
 
-        cart_item_pk = kwargs['cart_item_pk']
-        cart_item = get_object_or_404(CartItem, pk=cart_item_pk, customer_id=customer_pk)
+        cart_item_pk = kwargs["cart_item_pk"]
+        cart_item = get_object_or_404(
+            CartItem, pk=cart_item_pk, customer_id=customer_pk
+        )
         serializer = CartItemUpdateInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         service = CartItemService()
-        service.update_quantity(cart_item, serializer.validated_data['quantity'])
+        service.update_quantity(cart_item, serializer.validated_data["quantity"])
 
-        return Response(
-            data={"message": "Cart item updated successfully"},
-            status=status.HTTP_204_NO_CONTENT,
-        )
-    
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def delete(self, request, **kwargs):
         customer_pk = kwargs["pk"]
         if request.user.pk != customer_pk:
-            raise PermissionDenied(
-                "Can't access cart Item of another user"
-            )
+            raise PermissionDenied("Can't access cart Item of another user")
 
-        cart_item_pk = kwargs['cart_item_pk']
-        cart_item = get_object_or_404(CartItem, pk=cart_item_pk, customer_id=customer_pk)
-    
+        cart_item_pk = kwargs["cart_item_pk"]
+        cart_item = get_object_or_404(
+            CartItem, pk=cart_item_pk, customer_id=customer_pk
+        )
+
         service = CartItemService()
         service.cart_item_delete(cart_item)
 
-        return Response(
-            data={"message": "Cart item deleted successfully"},
-            status=status.HTTP_204_NO_CONTENT,
-        )
-    
-
+        return Response(status=status.HTTP_204_NO_CONTENT)

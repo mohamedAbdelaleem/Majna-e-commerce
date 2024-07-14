@@ -4,6 +4,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
 from stores.models import Store
 from brands.models import Brand
+from accounts.models import Customer
 
 
 class Category(models.Model):
@@ -63,3 +64,14 @@ class AlbumItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     is_cover = models.BooleanField(default=False)
     added_at = models.DateTimeField(auto_now_add=True)
+
+class FavoriteItem(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["product", "customer"], name="unique_favorite_item"
+            )
+        ]

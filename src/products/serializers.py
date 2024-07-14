@@ -104,3 +104,19 @@ class ProductListOutSerializer(serializers.ModelSerializer):
 
         data['_links'] = links
         return data
+    
+class FavoriteItemInputSerializer(serializers.Serializer):
+    product_ids = serializers.ListField(child=serializers.IntegerField())
+
+
+class FavoriteItemOutSerializer(serializers.ModelSerializer):
+    product = ProductListOutSerializer()
+    class Meta:
+        model = models.FavoriteItem
+        fields = ['id', 'product', 'customer_id'] 
+   
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        links = {}
+        data['_links'] = links
+        return data

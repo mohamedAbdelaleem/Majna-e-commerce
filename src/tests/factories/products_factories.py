@@ -45,3 +45,9 @@ class AlbumItemFactory(factory.django.DjangoModelFactory):
 
     img_url = factory.lazy_attribute(lambda _: faker.file_name(extension="png"))
     product = factory.SubFactory(ProductFactory)
+
+class FavoriteItemFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = models.FavoriteItem
+    
+    product = factory.SubFactory(ProductFactory)
