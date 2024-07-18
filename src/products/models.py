@@ -61,7 +61,7 @@ class Inventory(models.Model):
 
 class AlbumItem(models.Model):
     img_url = models.CharField()
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='album_items')
     is_cover = models.BooleanField(default=False)
     added_at = models.DateTimeField(auto_now_add=True)
 

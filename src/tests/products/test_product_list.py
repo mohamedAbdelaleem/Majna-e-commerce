@@ -86,7 +86,7 @@ class CategoryProductListTests(APITestCase):
         )
         cls.category_id1 = cls.product1.sub_category.category_id
         cls.category_id2 = cls.product2.sub_category.category_id
-        cls.url = reverse("products:category_products", kwargs={'pk':cls.category_id1})
+        cls.url = reverse("categories:category_products", kwargs={'pk':cls.category_id1})
         cls.inventory = InventoryFactory.create(store=cls.store, product=cls.product1)
         cls.cover_image = AlbumItemFactory.create(product=cls.product1, is_cover=True)
 
@@ -95,7 +95,7 @@ class CategoryProductListTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
     def test_not_found_failure(self):
-        url = reverse("products:category_products", kwargs={'pk':self.category_id2+2})
+        url = reverse("categories:category_products", kwargs={'pk':self.category_id2+2})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     

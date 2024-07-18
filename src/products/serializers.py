@@ -7,13 +7,17 @@ from . import services
 
 product_selector = services.ProductSelector()
 
+
 class AlbumItemInputSerializer(serializers.Serializer):
     image = serializers.FileField()
     is_cover = serializers.BooleanField()
 
 
 class InventoryInputSerializer(serializers.ModelSerializer):
-    store_pk = serializers.IntegerField(min_value=1)    # Not PrimaryKeyRelatedField. Validations are applied in the product service to reduce the number of queries
+    store_pk = serializers.IntegerField(
+        min_value=1
+    )  # Not PrimaryKeyRelatedField. Validations are applied in the product service to reduce the number of queries
+
     class Meta:
         model = models.Inventory
         fields = ["store_pk", "quantity"]
@@ -22,9 +26,13 @@ class InventoryInputSerializer(serializers.ModelSerializer):
 class ProductInputSerializer(serializers.ModelSerializer):
     album = serializers.ListField(child=AlbumItemInputSerializer())
     inventory = serializers.ListField(child=InventoryInputSerializer())
-    brand_pk = serializers.IntegerField(min_value=1)    # Not PrimaryKeyRelatedField. Validations are applied in the product service to ensure that the distributor has an authorization
+    brand_pk = serializers.IntegerField(
+        min_value=1
+    )  # Not PrimaryKeyRelatedField. Validations are applied in the product service to ensure that the distributor has an authorization
     sub_category_pk = serializers.PrimaryKeyRelatedField(
-        queryset=models.SubCategory.objects.all(), source='sub_category', write_only=True
+        queryset=models.SubCategory.objects.all(),
+        source="sub_category",
+        write_only=True,
     )
 
     class Meta:
@@ -51,6 +59,7 @@ class SubCategoryOutSerializer(serializers.ModelSerializer):
         model = models.SubCategory
         fields = ["id", "name", "category_id"]
 
+
 class ProductListQueryParametersSerializer(serializers.Serializer):
     search = serializers.CharField(required=False)
     ordering = serializers.CharField(required=False)
@@ -58,63 +67,129 @@ class ProductListQueryParametersSerializer(serializers.Serializer):
     sub_category_id = serializers.IntegerField(required=False)
 
     def validate_ordering(self, val):
-        ordering_attributes = ['price', '-price']
+        ordering_attributes = ["price", "-price"]
         if not val:
             return []
-        ordering_list = val.split(',')
+        ordering_list = val.split(",")
         for item in ordering_list:
             if item not in ordering_attributes:
-                raise ValidationError('Invalid Ordering attributes')
+                raise ValidationError("Invalid Ordering attributes")
         return ordering_list
-    
+
     def validate_price__range(self, val):
         if not val:
             return []
-        
-        p_range = val.split(',')
+
+        p_range = val.split(",")
         if len(p_range) != 2:
             raise ValidationError("Price range should be 2 values")
-        
+
         p_range = [float(p_range[0]), float(p_range[1])]
         p_range.sort()
         if p_range[0] < 0:
             raise ValidationError("Invalid Price Values")
-        
+
         return p_range
 
 
 class ProductListOutSerializer(serializers.ModelSerializer):
     brand = serializers.StringRelatedField()
     cover_image = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Product
-        fields = ['id', 'name', 'price', 'brand', 'cover_image']
-    
+        fields = ["id", "name", "price", "brand", "cover_image"]
+
     def get_cover_image(self, obj):
         # image_url = product_selector.get_cover_image_url(obj.pk)      # After migrating to AWS return the original image
         temp_url = "https://www.mountaingoatsoftware.com/uploads/blog/2016-09-06-what-is-a-product.png"
         return temp_url
-    
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        brand_url = reverse("brands:brand", kwargs={'pk':instance.brand_id})
+        brand_url = reverse("brands:brand", kwargs={"pk": instance.brand_id})
         links = {
-            'brand': self.context["request"].build_absolute_uri(brand_url),
+            "brand": self.context["request"].build_absolute_uri(brand_url),
         }
 
-        data['_links'] = links
+        data["_links"] = links
         return data
+
+
+class AlbumItemOutSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.AlbumItem
+        fields = ["is_cover", "url"]
+
+    def get_url(self, obj):
+        # image_url = product_selector.get_image_url(obj.url)      # After migrating to AWS return the original image
+        temp_url = "https://www.mountaingoatsoftware.com/uploads/blog/2016-09-06-what-is-a-product.png"
+        return temp_url
+
+
+class ProductOutSerializer(serializers.ModelSerializer):
+    brand = serializers.StringRelatedField()
+    sub_category = serializers.StringRelatedField()
+    album_items = AlbumItemOutSerializer(many=True, read_only=True)
+    inventory = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Product
+        fields = [
+            "id",
+            "name",
+            "description",
+            "price",
+            "added_at",
+            "sub_category",
+            "category",
+            "brand",
+            "album_items",
+            "inventory"
+        ]
+
+    def get_inventory(self, obj):
+        total_quantity = product_selector.get_total_quantity(obj.pk)
+        inventory = product_selector.get_inventory(obj.pk)
+        inventory = [inv for inv in inventory]
+        inventory = {
+            "total_quantity": total_quantity,
+            "stores": inventory
+        }
+        return inventory
     
+    def get_category(self, obj):
+        category = models.Category.objects.get(pk=obj.sub_category.category_id)
+        return category.name
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        brand_url = reverse("brands:brand", kwargs={"pk": instance.brand_id})
+        category_url = reverse("categories:category", kwargs={"pk": instance.sub_category.category_id})
+        sub_category_url = reverse("sub_categories:sub_category", kwargs={"pk": instance.sub_category_id})
+        links = {
+            "brand": self.context["request"].build_absolute_uri(brand_url),
+            "category": self.context["request"].build_absolute_uri(category_url),
+            "sub_category": self.context["request"].build_absolute_uri(sub_category_url),
+        }
+
+        data["_links"] = links
+        return data
+
 class FavoriteItemInputSerializer(serializers.Serializer):
     product_ids = serializers.ListField(child=serializers.IntegerField())
 
 
 class FavoriteItemOutSerializer(serializers.ModelSerializer):
     product = ProductListOutSerializer()
+
     class Meta:
         model = models.FavoriteItem
-        fields = ['id', 'product', 'customer_id'] 
-   
+        fields = ["id", "product", "customer_id"]
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         links = {}

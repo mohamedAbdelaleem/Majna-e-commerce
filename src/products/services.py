@@ -2,7 +2,7 @@ from typing import List, Dict
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Subquery
+from django.db.models import Subquery, Sum
 from django.conf import settings
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.exceptions import PermissionDenied
@@ -180,3 +180,15 @@ class ProductSelector:
     def favorite_item_list(self, **filters):
         items = product_models.FavoriteItem.objects.filter(**filters)
         return items
+
+    def get_total_quantity(self, product_id: int):
+        total_quantity = product_models.Inventory.objects.filter(
+            product_id=product_id
+        ).aggregate(total=Sum("quantity"))["total"]
+        return total_quantity
+
+    def get_inventory(self, product_id: int):
+        inventory = product_models.Inventory.objects.filter(
+            product_id=product_id
+        ).values("store_id", "quantity")
+        return inventory
