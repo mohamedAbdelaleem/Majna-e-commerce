@@ -1,6 +1,8 @@
 # Majna-e-commerce
 A B2C e-commerce that enables Egyptian customers to buy brand-name products confidently from authorized distributors.
 
+- Enhanced user search experience by implementing full-text search, achieving a 25x speed increase using an inverted index. ([See Case study](https://gist.github.com/mohamedAbdelaleem/76de25e1891ea94837d820e5a79ee64a))
+
 ## Contets
 - [Requirements](#requirements)
 - [Database Design](#database-design)
