@@ -50,6 +50,21 @@ class ProductService:
 
         return product
 
+    def update(self, product: product_models.Product, distributor_pk: int, **data):
+        with transaction.atomic():
+            if "inventory" in data:
+                self._validate_inventory(data["inventory"], distributor_pk)
+                product_models.Inventory.objects.filter(product_id=product.pk).delete()
+                self.add_inventory(product.pk, data["inventory"])
+                del data["inventory"]
+            for key, val in data.items():
+                product.__setattr__(key, val)
+            product.full_clean()
+            product.save()
+
+    def delete(self, product: product_models.Product):
+        product.delete()
+
     def add_album_items(self, product_pk, album_items_data: List[Dict]):
         for item in album_items_data:
             image, is_cover = item["image"], item["is_cover"]
@@ -89,6 +104,9 @@ class ProductService:
 
     def _validate_inventory(self, inventory: List[Dict], distributor_pk):
         stores = [inv["store_pk"] for inv in inventory]
+        if len(stores) == 0:
+            raise ValidationError("No stores are provided!")
+        
         stores_num = (
             store_models.Store.objects.filter(
                 pk__in=stores, distributor_id=distributor_pk
@@ -192,3 +210,7 @@ class ProductSelector:
             product_id=product_id
         ).values("store_id", "quantity")
         return inventory
+    
+    def is_owner(self, distributor_pk: int, product_pk: int):
+        products = self.product_list(id=product_pk, inventory__store__distributor_id=distributor_pk)
+        return products.exists()

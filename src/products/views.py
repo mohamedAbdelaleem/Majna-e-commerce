@@ -25,10 +25,7 @@ class ProductListCreateView(APIView):
         distributor_pk = request.user.pk
         serializer = serializers.ProductInputSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            print(serializer.validated_data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        print(type(serializer.validated_data))
+        serializer.is_valid(raise_exception=True)
         service = services.ProductService()
         service.create(serializer.validated_data, distributor_pk)
 

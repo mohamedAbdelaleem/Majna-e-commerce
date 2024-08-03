@@ -48,6 +48,19 @@ class ProductInputSerializer(serializers.ModelSerializer):
         ]
 
 
+class ProductUpdateInputSerializer(serializers.ModelSerializer):
+    inventory = serializers.ListField(child=InventoryInputSerializer())
+
+    class Meta:
+        model = models.Product
+        fields = [
+            "name",
+            "description",
+            "price",
+            "inventory",
+        ]
+
+
 class CategoryOutSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
@@ -107,9 +120,21 @@ class ProductListOutSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        self_url = reverse("products:product", kwargs={"pk": instance.pk})
         brand_url = reverse("brands:brand", kwargs={"pk": instance.brand_id})
+        category_url = reverse(
+            "categories:category", kwargs={"pk": instance.sub_category.category_id}
+        )
+        sub_category_url = reverse(
+            "sub_categories:sub_category", kwargs={"pk": instance.sub_category_id}
+        )
         links = {
+            "self": self.context["request"].build_absolute_uri(self_url),
             "brand": self.context["request"].build_absolute_uri(brand_url),
+            "category": self.context["request"].build_absolute_uri(category_url),
+            "sub_category": self.context["request"].build_absolute_uri(
+                sub_category_url
+            ),
         }
 
         data["_links"] = links
@@ -148,36 +173,42 @@ class ProductOutSerializer(serializers.ModelSerializer):
             "category",
             "brand",
             "album_items",
-            "inventory"
+            "inventory",
         ]
 
     def get_inventory(self, obj):
         total_quantity = product_selector.get_total_quantity(obj.pk)
         inventory = product_selector.get_inventory(obj.pk)
         inventory = [inv for inv in inventory]
-        inventory = {
-            "total_quantity": total_quantity,
-            "stores": inventory
-        }
+        inventory = {"total_quantity": total_quantity, "stores": inventory}
         return inventory
-    
+
     def get_category(self, obj):
         category = models.Category.objects.get(pk=obj.sub_category.category_id)
         return category.name
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        self_url = reverse("products:product", kwargs={"pk": instance.pk})
         brand_url = reverse("brands:brand", kwargs={"pk": instance.brand_id})
-        category_url = reverse("categories:category", kwargs={"pk": instance.sub_category.category_id})
-        sub_category_url = reverse("sub_categories:sub_category", kwargs={"pk": instance.sub_category_id})
+        category_url = reverse(
+            "categories:category", kwargs={"pk": instance.sub_category.category_id}
+        )
+        sub_category_url = reverse(
+            "sub_categories:sub_category", kwargs={"pk": instance.sub_category_id}
+        )
         links = {
+            "self": self.context["request"].build_absolute_uri(self_url),
             "brand": self.context["request"].build_absolute_uri(brand_url),
             "category": self.context["request"].build_absolute_uri(category_url),
-            "sub_category": self.context["request"].build_absolute_uri(sub_category_url),
+            "sub_category": self.context["request"].build_absolute_uri(
+                sub_category_url
+            ),
         }
 
         data["_links"] = links
         return data
+
 
 class FavoriteItemInputSerializer(serializers.Serializer):
     product_ids = serializers.ListField(child=serializers.IntegerField())
@@ -193,5 +224,5 @@ class FavoriteItemOutSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         links = {}
-        data['_links'] = links
+        data["_links"] = links
         return data

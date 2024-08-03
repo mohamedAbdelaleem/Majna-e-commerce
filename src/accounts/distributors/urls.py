@@ -20,5 +20,11 @@ urlpatterns = [
          name="stores"),
     path("<int:pk>/stores/<int:store_pk>",
          view=stores_views.StoreDisplayUpdateDeleteView().as_view(),
-         name="store")
+         name="store"),
+    path("<int:pk>/products",
+         view=views.DistributorProductListView().as_view(),
+         name="products"),
+    path("<int:pk>/products/<int:product_pk>",
+         view=views.ProductDetailUpdateDeleteView().as_view(),
+         name="product"),
 ]
