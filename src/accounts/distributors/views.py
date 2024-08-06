@@ -64,7 +64,7 @@ class DistributorProductListView(APIView):
         selector = ProductSelector()
         products = selector.product_list(
             inventory__store__distributor_id=distributor_pk, ordering=["-id"]
-        )
+        ).distinct("id")
         paginator = ProductPagination()
         products = products.prefetch_related("brand")
         paginated_dataset = paginator.paginate_queryset(products, request)
