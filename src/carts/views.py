@@ -40,7 +40,7 @@ class CartItemListCreate(APIView):
             raise PermissionDenied("Can't access cart Items of another user")
 
         selector = CartItemSelector()
-        cart_items = selector.cart_item_list()
+        cart_items = selector.cart_item_list(customer_id=customer_pk)
         cart_items.prefetch_related("product")
         serializer = CartItemOutSerializer(
             instance=cart_items, many=True, context={"request": request}

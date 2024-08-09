@@ -27,8 +27,12 @@ class CartListTests(APITestCase):
         cls.inventory = InventoryFactory.create(store=cls.store, product=cls.product1)
         cls.cover_image = AlbumItemFactory.create(product=cls.product1, is_cover=True)
         cls.customer = create_customer("customer@test.com")
+        cls.customer2 = create_customer("customer2@test.com")
         cls.cart_item = CartItemFactory.create(
             customer=cls.customer, product=cls.product1
+        )
+        cls.cart_item2 = CartItemFactory.create(
+            customer=cls.customer2, product=cls.product1
         )
         cls.url = reverse("customers:cart_items", kwargs={'pk': cls.customer.pk})
 
@@ -55,11 +59,15 @@ class CartListTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {customer_token}")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['cart_items']), 1)
     
     def test_not_same_customer_failure(self):
-        customer = create_customer("customer2@test.com")
-        customer_token = generate_auth_token(customer.user)
+        customer_token = generate_auth_token(self.customer2.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {customer_token}")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    
+    def test_retrieved_carts_count(self):
+        customer_token = generate_auth_token(self.customer.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {customer_token}")
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.data['cart_items']), 1)
