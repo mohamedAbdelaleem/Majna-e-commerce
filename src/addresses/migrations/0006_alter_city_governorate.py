@@ -7,13 +7,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('stores', '0005_remove_store_governorate'),
+        ('addresses', '0005_remove_store_governorate'),
     ]
 
     operations = [
         migrations.AlterField(
             model_name='city',
             name='governorate',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='cities', to='stores.governorate'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='cities', to='addresses.governorate'),
         ),
     ]

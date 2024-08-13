@@ -1,5 +1,5 @@
 from django.urls import path
-import stores.views as stores_views
+import addresses.views as stores_views
 from . import views
 
 app_name = "distributors"

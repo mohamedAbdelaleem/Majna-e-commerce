@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('brands', '0002_alter_brand_name'),
-        ('stores', '0006_alter_city_governorate'),
+        ('addresses', '0006_alter_city_governorate'),
     ]
 
     operations = [
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ('price', models.DecimalField(decimal_places=2, max_digits=7)),
                 ('added_at', models.DateTimeField(auto_now_add=True)),
                 ('brand', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='brands.brand')),
-                ('stores', models.ManyToManyField(through='products.Inventory', to='stores.store')),
+                ('stores', models.ManyToManyField(through='products.Inventory', to='addresses.store')),
                 ('sub_category', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='products.subcategory')),
             ],
         ),
@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='inventory',
             name='store',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='stores.store'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='addresses.store'),
         ),
         migrations.CreateModel(
             name='AlbumItem',

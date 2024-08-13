@@ -1,7 +1,7 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
-from stores.models import Store
+from addresses.models import Store
 from tests.factories.addresses_factories import CityFactory
 from tests.factories.auth_factories import (
     create_customer,

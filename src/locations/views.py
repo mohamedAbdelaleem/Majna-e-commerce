@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from stores.models import Governorate
+from addresses.models import Governorate
 from .serializers import GovernorateSerializer
 
 

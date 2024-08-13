@@ -34,9 +34,9 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100)),
                 ('address', models.CharField()),
                 ('creation_date', models.DateTimeField(auto_now_add=True)),
-                ('city_id', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='stores.city')),
+                ('city_id', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='addresses.city')),
                 ('distributor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.distributor')),
-                ('governorate_id', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='stores.governorate')),
+                ('governorate_id', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='addresses.governorate')),
             ],
         ),
     ]

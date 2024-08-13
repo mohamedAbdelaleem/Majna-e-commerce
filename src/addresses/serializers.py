@@ -1,6 +1,6 @@
 from django.urls import reverse
 from rest_framework import serializers
-from .models import Store
+from .models import Store, PickupAddress, Governorate
 
 
 class StoreInputSerializer(serializers.ModelSerializer):
@@ -40,5 +40,34 @@ class StoreOutSerializer(serializers.ModelSerializer):
             "self": self.context["request"].build_absolute_uri(self_url),
         }
 
+        data["_links"] = links
+        return data
+
+
+class PickupAddressInputSerializer(serializers.ModelSerializer):
+    city_id = serializers.IntegerField()
+
+    class Meta:
+        model = PickupAddress
+        fields = ["city_id", "address"]
+
+
+class PickupAddressOutSerializer(serializers.ModelSerializer):
+    city = serializers.StringRelatedField()
+
+    class Meta:
+        model = PickupAddress
+        fields = ["id", "customer_id", "city", "city_id", "address"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        governorate = Governorate.objects.get(pk=instance.city.governorate_id)
+        self_url = reverse(
+            "customers:address",
+            kwargs={"pk": instance.customer_id, "address_pk": instance.pk},
+        )
+        links = {"self": self.context["request"].build_absolute_uri(self_url)}
+        data["governorate"] = governorate.name
+        data["governorate_id"] = governorate.pk
         data["_links"] = links
         return data

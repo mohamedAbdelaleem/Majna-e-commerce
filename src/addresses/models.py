@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import Distributor
+from accounts.models import Distributor, Customer
 
 
 class Governorate(models.Model):
@@ -25,3 +25,13 @@ class Store(models.Model):
     city = models.ForeignKey(City, on_delete=models.PROTECT)
     address = models.CharField()
     creation_date = models.DateTimeField(auto_now_add=True)
+
+
+class PickupAddress(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    city = models.ForeignKey(City, on_delete=models.PROTECT)
+    address = models.CharField()
+
+    def __str__(self) -> str:
+        return f"Customer_{self.customer_id}"
+    

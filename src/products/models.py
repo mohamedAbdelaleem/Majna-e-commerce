@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
-from stores.models import Store
+from addresses.models import Store
 from brands.models import Brand
 from accounts.models import Customer
 

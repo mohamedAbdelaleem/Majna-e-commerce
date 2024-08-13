@@ -1,6 +1,6 @@
 import factory
 from faker import Faker
-from stores.models import Store
+from addresses.models import Store
 from tests.factories.addresses_factories import CityFactory
 
 faker = Faker()

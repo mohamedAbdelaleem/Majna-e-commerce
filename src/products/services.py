@@ -10,7 +10,7 @@ from brands.services import BrandSelector
 from utils.storage import SupabaseStorageService
 from utils.helpers import generate_dated_filepath
 from common.validators import validate_file_format, validate_file_size
-from stores import models as store_models
+from addresses import models as addresses_models
 from . import models as product_models
 
 
@@ -108,7 +108,7 @@ class ProductService:
             raise ValidationError("No stores are provided!")
         
         stores_num = (
-            store_models.Store.objects.filter(
+            addresses_models.Store.objects.filter(
                 pk__in=stores, distributor_id=distributor_pk
             )
             .values("distributor_id")

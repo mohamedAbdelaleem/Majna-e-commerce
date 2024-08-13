@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('stores', '0001_initial'),
+        ('addresses', '0001_initial'),
     ]
 
     operations = [
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='city',
             name='governorate',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, to='stores.governorate'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, to='addresses.governorate'),
             preserve_default=False,
         ),
     ]
