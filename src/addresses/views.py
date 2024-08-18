@@ -84,7 +84,20 @@ class StoreDisplayUpdateDeleteView(APIView):
         return Response(data={"message": "Store Updated"}, status=status.HTTP_200_OK)
 
     def delete(self, request, **kwargs):
-        pass
+        distributor_pk = kwargs["pk"]
+        if request.user.pk != distributor_pk:
+            raise PermissionDenied("Permission Denied!")
+
+        store_pk = kwargs["store_pk"]
+        store = get_object_or_404(Store, pk=store_pk)
+        if store.distributor_id != distributor_pk:
+            raise PermissionDenied("Permission Denied!")
+        
+        service = StoreService()
+        service.delete_store(store)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 class PickupAddressListCreate(APIView):
