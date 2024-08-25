@@ -214,3 +214,6 @@ class ProductSelector:
     def is_owner(self, distributor_pk: int, product_pk: int):
         products = self.product_list(id=product_pk, inventory__store__distributor_id=distributor_pk)
         return products.exists()
+
+    def get_product(self, **criteria):
+        return product_models.Product.objects.get(**criteria)

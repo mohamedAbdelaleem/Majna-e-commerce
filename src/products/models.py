@@ -26,7 +26,7 @@ class Product(models.Model):
     name = models.CharField()
     description = models.TextField()
     price = models.DecimalField(
-        max_digits=7, decimal_places=2, validators=[MinValueValidator(1)]
+        max_digits=8, decimal_places=2, validators=[MinValueValidator(1)]
     )
     added_at = models.DateTimeField(auto_now_add=True)
     sub_category = models.ForeignKey(SubCategory, on_delete=models.PROTECT)
