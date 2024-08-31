@@ -5,6 +5,8 @@ from django.contrib.postgres.search import SearchVector
 from addresses.models import Store
 from brands.models import Brand
 from accounts.models import Customer
+from common.validators import validate_file_size
+from utils.helpers import generate_dated_filepath
 
 
 class Category(models.Model):
@@ -59,8 +61,11 @@ class Inventory(models.Model):
         ]
 
 
+def product_images_path(instance, filename):
+    return f"product_images/{generate_dated_filepath(filename)}"
+
 class AlbumItem(models.Model):
-    img_url = models.CharField()
+    image = models.ImageField(upload_to=product_images_path, validators=[validate_file_size])
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='album_items')
     is_cover = models.BooleanField(default=False)
     added_at = models.DateTimeField(auto_now_add=True)

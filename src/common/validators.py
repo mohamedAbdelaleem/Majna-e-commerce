@@ -1,8 +1,11 @@
 
 from typing import List
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
-def validate_file_size(file, max_size):
+
+def validate_file_size(file):
+    max_size = settings.FILE_UPLOAD_MAX_MEMORY_SIZE
     if file.size > max_size:
         raise ValidationError(f"File size must be nor more than {max_size/1024/1024}MB")
 

@@ -1,10 +1,6 @@
 from django.urls import reverse
 from rest_framework import serializers
-from .services import BrandApplicationSelector
 from .models import BrandApplication
-
-
-brand_application_selector = BrandApplicationSelector()
 
 
 class BrandApplicationInputSerializer(serializers.Serializer):
@@ -37,12 +33,10 @@ class BrandApplicationOutSerializer(serializers.ModelSerializer):
         ]
 
     def get_authorization_doc(self, obj):
-        path = obj.authorization_doc
-        return brand_application_selector.get_document_url(path)
+        return obj.authorization_doc.url
 
     def get_identity_doc(self, obj):
-        path = obj.identity_doc
-        return brand_application_selector.get_document_url(path)
+        return obj.identity_doc.url
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

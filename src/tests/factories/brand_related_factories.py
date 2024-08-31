@@ -26,6 +26,6 @@ class BrandApplicationFactory(factory.django.DjangoModelFactory):
 
     brand = factory.SubFactory(BrandFactory)
     # distributor = factory.SubFactory(DistributorFactory)
-    authorization_doc = factory.lazy_attribute(lambda _:faker.file_name(extension='pdf'))  
-    identity_doc = factory.lazy_attribute(lambda _:faker.file_name(extension='pdf'))  
+    authorization_doc = factory.django.FileField(filename="auth.pdf")
+    identity_doc = factory.django.FileField(filename="identity.pdf")
     request_date = factory.lazy_attribute(lambda _: faker.date_time_this_decade())

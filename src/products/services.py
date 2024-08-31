@@ -66,19 +66,15 @@ class ProductService:
         product.delete()
 
     def add_album_items(self, product_pk, album_items_data: List[Dict]):
+        album_items = []
         for item in album_items_data:
             image, is_cover = item["image"], item["is_cover"]
-            image_path = f"product_images/{generate_dated_filepath(image.name)}"
-            with transaction.atomic():
-                self.supabase.upload(
-                    image,
-                    "images",
-                    image_path,
-                    file_options={"content-type": "image/*"},
-                )
-                product_models.AlbumItem.objects.create(
-                    product_id=product_pk, img_url=image_path, is_cover=is_cover
-                )
+            album_item = product_models.AlbumItem(
+                product_id=product_pk, image=image, is_cover=is_cover
+            )
+            album_item.full_clean()
+            album_items.append(album_item)
+        product_models.AlbumItem.objects.bulk_create(album_items)
 
     def add_inventory(self, product_pk, inventory_data: List[Dict]):
         for item in inventory_data:
@@ -94,7 +90,6 @@ class ProductService:
         num_of_covers = 0
         for item in album_items_data:
             image, is_cover = item["image"], item["is_cover"]
-            validate_file_size(image, settings.ALBUM_ITEM_MAX_SIZE)
             validate_file_format(image, ["jpg", "png", "jpeg"])
             if is_cover:
                 num_of_covers += 1
@@ -185,10 +180,10 @@ class ProductSelector:
         )
 
     def get_cover_image_url(self, product_pk):
-        cover_image = product_models.AlbumItem.objects.get(
+        cover_image_item = product_models.AlbumItem.objects.get(
             product_id=product_pk, is_cover=True
         )
-        return self.get_image_url(cover_image.img_url)
+        return cover_image_item.image.url
 
     def get_image_url(self, path: str) -> str:
         duration = timedelta(days=2).total_seconds()

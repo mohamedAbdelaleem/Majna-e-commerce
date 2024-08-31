@@ -22,7 +22,7 @@ from tests.factories.auth_factories import (
 def generate_valid_image(name: str = "name.jpg"):
     valid_file = SimpleUploadedFile(
         name=name,
-        content=b"A" * (settings.ALBUM_ITEM_MAX_SIZE - 1),
+        content=b"A" * (settings.FILE_UPLOAD_MAX_MEMORY_SIZE - 1),
         content_type="image/*",
     )
     return valid_file
@@ -48,12 +48,12 @@ class AddProductTests(APITestCase):
 
         cls.invalid_file_size = SimpleUploadedFile(
             name="name.jpg",
-            content=b"A" * (settings.ALBUM_ITEM_MAX_SIZE + 1),
+            content=b"A" * (settings.FILE_UPLOAD_MAX_MEMORY_SIZE + 1),
             content_type="image/*",
         )
         cls.invalid_file_formate = SimpleUploadedFile(
             name="name.pdf",
-            content=b"A" * (settings.ALBUM_ITEM_MAX_SIZE - 1),
+            content=b"A" * (settings.FILE_UPLOAD_MAX_MEMORY_SIZE - 1),
             content_type="application/pdf",
         )
         cls.data = {
