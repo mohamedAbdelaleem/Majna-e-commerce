@@ -7,3 +7,6 @@ class PagePagination(PageNumberPagination):
 
 class ProductPagination(PageNumberPagination):
     page_size = 12
+
+class OrderPagination(PageNumberPagination):
+    page_size = 12

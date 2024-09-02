@@ -2,6 +2,7 @@ from typing import List, Dict
 from collections import deque
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Sum, F
 from products.services import ProductSelector
 from products.models import Inventory
 from addresses.models import PickupAddress
@@ -10,6 +11,12 @@ from .models import Order, OrderItem, OrderItemStore
 
 MAX_ORDER_PRODUCTS = 5
 
+
+ORDER_CHOICES_MAPPING = {
+    1: "Placed",
+    2: "Shipped",
+    3: "Delivered",
+}
 
 class OrderService:
     def __init__(self) -> None:
@@ -74,6 +81,19 @@ class OrderService:
 
 
 class OrderSelector:
+
+    def order_list(self, ordering: List[str]=None, **filters): 
+        orders = Order.objects.filter(**filters)
+        if ordering:
+            orders.order_by(*ordering)
+        return orders
+
+    def get_order_total_price(self, order_pk: int):
+        total_price = OrderItem.objects.filter(order_id=order_pk).aggregate(
+            total=Sum(F('quantity') * F("unit_price"), default=0)
+        )["total"]
+        return total_price
+
     def get_available_inventories(self, product_id: int):
         inventories = Inventory.objects.filter(product_id=product_id).order_by(
             "-quantity"

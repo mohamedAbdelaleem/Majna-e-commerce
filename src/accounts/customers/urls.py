@@ -2,6 +2,7 @@ from django.urls import path
 import carts.views as carts_views
 import products.views as products_views
 from addresses import views as addresses_views
+from orders import views as orders_views
 
 app_name = "customers"
 
@@ -37,4 +38,9 @@ urlpatterns = [
         name="address",
     ),
     
+    path(
+        "<int:pk>/orders",
+        view=orders_views.CustomerOrderListView().as_view(),
+        name="orders",
+    ),
 ]

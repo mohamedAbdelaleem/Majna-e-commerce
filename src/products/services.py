@@ -3,13 +3,11 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Subquery, Sum
-from django.conf import settings
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.exceptions import PermissionDenied
 from brands.services import BrandSelector
 from utils.storage import SupabaseStorageService
-from utils.helpers import generate_dated_filepath
-from common.validators import validate_file_format, validate_file_size
+from common.validators import validate_file_format
 from addresses import models as addresses_models
 from . import models as product_models
 

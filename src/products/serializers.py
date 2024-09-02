@@ -114,8 +114,7 @@ class ProductListOutSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "price", "brand", "cover_image"]
 
     def get_cover_image(self, obj):
-        image_url = product_selector.get_cover_image_url(obj.pk)      # After migrating to AWS return the original image
-        # temp_url = "https://www.mountaingoatsoftware.com/uploads/blog/2016-09-06-what-is-a-product.png"
+        image_url = product_selector.get_cover_image_url(obj.pk)
         return image_url
 
     def to_representation(self, instance):
