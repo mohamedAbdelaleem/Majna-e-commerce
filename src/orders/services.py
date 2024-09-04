@@ -50,6 +50,7 @@ class OrderService:
             self.order_selector.get_available_inventories(order_item.product_id)
         )
         order_item_stores = []
+        inventories_update_list = []
         while quantity > 0 and inventories:
             curr_inventory = inventories.popleft()
             reserved_quantity = min(quantity, curr_inventory.quantity)
@@ -59,9 +60,12 @@ class OrderService:
                 store_id=curr_inventory.store_id,
             )
             quantity -= reserved_quantity
+            curr_inventory.quantity -= reserved_quantity
+            inventories_update_list.append(curr_inventory)
             order_item_stores.append(order_item_store)
 
         OrderItemStore.objects.bulk_create(order_item_stores)
+        Inventory.objects.bulk_update(inventories_update_list, ['quantity'])
 
     def _validate_order_items(self, order_items: List):
         if len(order_items) > MAX_ORDER_PRODUCTS:
@@ -85,7 +89,7 @@ class OrderSelector:
     def order_list(self, ordering: List[str]=None, **filters): 
         orders = Order.objects.filter(**filters)
         if ordering:
-            orders.order_by(*ordering)
+            orders = orders.order_by(*ordering)
         return orders
 
     def get_order_total_price(self, order_pk: int):

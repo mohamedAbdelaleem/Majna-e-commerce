@@ -162,7 +162,7 @@ class ProductSelector:
                 .order_by("-rank")
             )
             if ordering:
-                products.order_by(*ordering, "-rank")
+                products = products.order_by(*ordering, "-rank")
 
         elif ordering:
             products = products.order_by(*ordering)
