@@ -4,10 +4,9 @@ from rest_framework import status
 from addresses.models import Store
 from tests.factories.addresses_factories import CityFactory
 from tests.factories.auth_factories import (
-    create_customer,
     create_distributor,
     create_groups,
-    create_reviewer,
+    generate_all_users_except,
     generate_auth_token
 )
 
@@ -42,25 +41,19 @@ class AddStoreTests(APITestCase):
 
     def test_non_distributor_failure(self):
         stores_count = Store.objects.count()
-        customer = create_customer("customer@test.com")
-        token = generate_auth_token(customer.user)
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        users = generate_all_users_except("Distributor")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        response = self.client.post(self.url, self.valid_data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            response = self.client.post(self.url, self.valid_data)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        curr_stores_count = Store.objects.count()
-        self.assertEqual(stores_count, curr_stores_count)
-
-        reviewer = create_reviewer("reviewer@test.com")
-        token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
-
-        response = self.client.post(self.url, self.valid_data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        curr_stores_count = Store.objects.count()
-        self.assertEqual(stores_count, curr_stores_count)
+            curr_stores_count = Store.objects.count()
+            self.assertEqual(stores_count, curr_stores_count)
 
     def test_not_same_distributor_failure(self):
         stores_count = Store.objects.count()

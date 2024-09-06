@@ -5,9 +5,9 @@ from tests.factories.addresses_factories import CityFactory, GovernorateFactory
 from tests.factories.auth_factories import (
     create_customer,
     create_distributor,
+    generate_all_users_except,
     generate_auth_token,
     create_groups,
-    create_reviewer,
 )
 
 
@@ -35,19 +35,18 @@ class AddressCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthorized_failure(self):
-        distributor_token = generate_auth_token(self.distributor.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {distributor_token}")
-        url = reverse("customers:addresses", kwargs={"pk": self.distributor.pk})
-        response = self.client.post(url, data=self.valid_data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        users = generate_all_users_except("Customer")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        reviewer = create_reviewer(email="reviewer@test.com")
-        reviewer_token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {reviewer_token}")
-        url = reverse("customers:addresses", kwargs={"pk": reviewer.pk})
-        response = self.client.post(url, data=self.valid_data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            url = reverse("customers:addresses", kwargs={"pk": user.pk})
+            response = self.client.post(url, data=self.valid_data)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            
     def test_not_same_customer_failure(self):
         url = reverse("customers:addresses", kwargs={"pk": self.customer.pk + 1})
         response = self.client.post(url, data=self.valid_data)

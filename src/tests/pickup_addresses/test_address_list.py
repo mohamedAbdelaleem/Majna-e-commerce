@@ -23,17 +23,16 @@ class PickupAddressListTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthorized_failure(self):
-        distributor = auth_factories.create_distributor("distributor@test.com")
-        token = auth_factories.generate_auth_token(distributor.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        
-        reviewer = auth_factories.create_reviewer("reviewer@test.com")
-        token = auth_factories.generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        users = auth_factories.generate_all_users_except("Customer")
+        for user in users:
+            if hasattr(user, "user"):
+                token = auth_factories.generate_auth_token(user=user.user)
+            else:
+                token = auth_factories.generate_auth_token(user=user)
+
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_not_same_customer_failure(self):
         token = auth_factories.generate_auth_token(self.customer2.user)

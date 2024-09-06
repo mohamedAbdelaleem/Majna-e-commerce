@@ -11,7 +11,7 @@ from tests.factories.carts_factories import CartItemFactory
 from tests.factories.auth_factories import (
     create_customer,
     create_distributor,
-    create_reviewer,
+    generate_all_users_except,
     generate_auth_token,
     create_groups,
 )
@@ -41,18 +41,17 @@ class CartListTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_non_customer_failure(self):
-        distributor_token = generate_auth_token(self.distributor.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {distributor_token}")
-        url = reverse("customers:cart_items", kwargs={'pk': self.distributor.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        users = generate_all_users_except("Customer")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        reviewer = create_reviewer("reviewer@test.com")
-        reviewer_token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {reviewer_token}")
-        url = reverse("customers:cart_items", kwargs={'pk': reviewer.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            url = reverse("customers:cart_items", kwargs={'pk': user.pk})
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_customer_success(self):
         customer_token = generate_auth_token(self.customer.user)

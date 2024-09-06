@@ -180,10 +180,10 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get(
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
 
 
-STORAGES = {
-    # Media Files
-    "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
-    },
-    "staticfiles": {"BACKEND": "storages.backends.s3.S3Storage"},
-}
+# STORAGES = {
+#     # Media Files
+#     "default": {
+#         "BACKEND": "storages.backends.s3.S3Storage",
+#     },
+#     "staticfiles": {"BACKEND": "storages.backends.s3.S3Storage"},
+# }

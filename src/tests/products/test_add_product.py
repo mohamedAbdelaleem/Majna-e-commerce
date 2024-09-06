@@ -11,9 +11,8 @@ from tests.factories.brand_related_factories import (
 from tests.factories.store_factories import StoreFactory
 from tests.factories.products_factories import SubCategoryFactory
 from tests.factories.auth_factories import (
-    create_customer,
     create_distributor,
-    create_reviewer,
+    generate_all_users_except,
     generate_auth_token,
     create_groups,
 )
@@ -87,17 +86,17 @@ class AddProductTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthorized_user_failure(self):
-        customer = create_customer(email="customer@test.com")
-        customer_token = generate_auth_token(customer.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {customer_token}")
-        response = self.client.post(self.url, data={})
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        users = generate_all_users_except("Distributor")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        reviewer = create_reviewer(email="reviewer@test.com")
-        reviewer_token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {reviewer_token}")
-        response = self.client.post(self.url, data={})
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            
+            response = self.client.post(self.url, data={})
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthorized_distributor(self):
         unauthorized_distributor = create_distributor(email="distributor@gmail.com")

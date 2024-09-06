@@ -5,9 +5,8 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from brands.models import Brand
 from tests.factories.auth_factories import (
-    create_customer,
     create_distributor,
-    create_reviewer,
+    generate_all_users_except,
     generate_auth_token,
     create_groups
 )
@@ -46,26 +45,19 @@ class CreateBrandApplicationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthorized_user_failure(self):
-        customer = create_customer(email="test2@test.com")
-        token = generate_auth_token(user=customer.user)
+        users = generate_all_users_except("Distributor")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
-        data = self.valid_data
-        response = self.client.post(
-            self.url, data=data, media_type="multipart/form-data"
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        reviewer = create_reviewer(email="test3@test.com")
-        token = generate_auth_token(user=reviewer)
-
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
-        data = self.valid_data
-        response = self.client.post(
-            self.url, data=data, media_type="multipart/form-data"
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            response = self.client.post(
+                self.url, data=self.valid_data, media_type="multipart/form-data"
+            )
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
     def test_invalid_brand_failure(self):
         data = self.valid_data
         url = reverse("brands:brand_applications", kwargs={"pk": self.brand.pk + 1})

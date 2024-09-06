@@ -10,10 +10,10 @@ from tests.factories.store_factories import StoreFactory
 from tests.factories.addresses_factories import PickupAddressFactory
 from tests.factories.auth_factories import (
     create_distributor,
+    generate_all_users_except,
     generate_auth_token,
     create_groups,
     create_customer,
-    create_reviewer,
 )
 
 
@@ -55,20 +55,18 @@ class OrderCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthorized_failure(self):
-        token = generate_auth_token(self.distributor.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
-        response = self.client.post(
-            self.url, self.valid_data, content_type="application/json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        users = generate_all_users_except("Customer")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        reviewer = create_reviewer("reviewer@test.com")
-        token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
-        response = self.client.post(
-            self.url, self.valid_data, content_type="application/json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            response = self.client.post(
+                self.url, self.valid_data, content_type="application/json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_invalid_product_id(self):
         invalid_data_product_id = {

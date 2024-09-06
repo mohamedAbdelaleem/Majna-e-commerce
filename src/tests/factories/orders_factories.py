@@ -37,3 +37,4 @@ def create_test_order(
     OrderItemStoreFactory.create(
         order_item=order_item, store=store, reserved_quantity=quantity
     )
+    return order

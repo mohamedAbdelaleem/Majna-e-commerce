@@ -4,10 +4,9 @@ from rest_framework import status
 from tests.factories.addresses_factories import CityFactory
 from tests.factories.store_factories import StoreFactory
 from tests.factories.auth_factories import (
-    create_customer,
     create_distributor,
     create_groups,
-    create_reviewer,
+    generate_all_users_except,
     generate_auth_token,
 )
 
@@ -39,19 +38,17 @@ class UpdateStoreTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_non_distributor_failure(self):
-        customer = create_customer("customer@test.com")
-        token = generate_auth_token(customer.user)
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        users = generate_all_users_except("Distributor")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        response = self.client.patch(self.url, self.valid_update_data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        reviewer = create_reviewer("reviewer@test.com")
-        token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
-
-        response = self.client.patch(self.url, self.valid_update_data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            
+            response = self.client.patch(self.url, self.valid_update_data)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)      
 
     def test_not_same_distributor_failure(self):
         distributor = create_distributor("distributor2@test.com")

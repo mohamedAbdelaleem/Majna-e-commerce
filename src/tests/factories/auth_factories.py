@@ -4,10 +4,11 @@ from knox.models import AuthToken
 from accounts.models import Distributor, Customer
 
 
+ROLES = ["Customer", "Distributor", "Reviewer", "Delivery"]
+
 def create_groups() -> None:
-    Group.objects.get_or_create(name="Customer")
-    Group.objects.get_or_create(name="Distributor")
-    Group.objects.get_or_create(name="Reviewer")
+    for role in ROLES:
+        Group.objects.get_or_create(name=role)
 
 
 def create_distributor(email="test@test.com", password='123') -> Distributor:
@@ -41,7 +42,7 @@ def create_customer(email="test@test.com", password='123') -> Customer:
 
 def create_reviewer(email="test@test.com", password='123') -> AbstractBaseUser:
     """
-    Create new user and assign the user to the Customers Group
+    Create new user and assign the user to the Reviewers Group
 
     - Warnings: 
         - Change the default email if it used previously  
@@ -54,6 +55,34 @@ def create_reviewer(email="test@test.com", password='123') -> AbstractBaseUser:
     reviewer.save()
 
     return reviewer
+
+
+def create_delivery(email="test@test.com", password='123') -> AbstractBaseUser:
+    """
+    Create new user and assign the user to the Delivery Group
+
+    - Warnings: 
+        - Change the default email if it used previously  
+        - the group should already exists use create_groups() to create 
+           the groups if you didn't 
+    """
+    group = Group.objects.get(name="Delivery")
+    delivery = get_user_model().objects.create_user(email, password)
+    delivery.groups.add(group)
+    delivery.save()
+
+    return delivery
+
+
+def generate_all_users_except(role_name: str):
+    create_groups()
+    users = []
+    for i, role in enumerate(ROLES):
+        if role != role_name:
+            function_name = f"create_{role.lower()}"
+            user = globals()[function_name](email=f"test{i}@test.com")
+            users.append(user)
+    return users
 
 
 def create_normal_user(email="test@test.com", password='123') -> AbstractBaseUser:

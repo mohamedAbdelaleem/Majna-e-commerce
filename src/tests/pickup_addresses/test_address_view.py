@@ -6,6 +6,7 @@ from tests.factories.auth_factories import (
     create_customer,
     create_distributor,
     create_reviewer,
+    generate_all_users_except,
     generate_auth_token,
     create_groups,
 )
@@ -175,25 +176,21 @@ class PickupAddressDeleteTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_non_customer_failure(self):
-        distributor = create_distributor("distributor@test.com")
-        distributor_token = generate_auth_token(distributor.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {distributor_token}")
-        url = reverse(
-            "customers:address",
-            kwargs={"pk": distributor.pk, "address_pk": self.address.pk},
-        )
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        users = generate_all_users_except("Customer")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        reviewer = create_reviewer("reviewer@test.com")
-        reviewer_token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {reviewer_token}")
-        url = reverse(
-            "customers:address",
-            kwargs={"pk": reviewer.pk, "address_pk": self.address.pk},
-        )
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            url = reverse(
+                "customers:address",
+                kwargs={"pk": user.pk, "address_pk": self.address.pk},
+            )
+            response = self.client.delete(url)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
     def test_address_delete_success(self):
         response = self.client.delete(self.url)

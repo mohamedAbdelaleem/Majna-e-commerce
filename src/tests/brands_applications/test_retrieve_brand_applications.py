@@ -6,6 +6,7 @@ from tests.factories.auth_factories import (
     create_customer,
     create_distributor,
     create_reviewer,
+    generate_all_users_except,
     generate_auth_token,
     create_groups,
 )
@@ -28,19 +29,16 @@ class RetrieveBrandApplicationsForReviewingTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_non_reviewer_failure(self):
-        customer = create_customer(email="test2@test.com")
-        token = generate_auth_token(user=customer.user)
+        users = generate_all_users_except("Reviewer")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        distributor = create_distributor(email="test3@test.com")
-        token = generate_auth_token(user=distributor.user)
-
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_success_retrieve(self):
         response = self.client.get(self.url)

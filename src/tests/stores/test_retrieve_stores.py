@@ -7,6 +7,7 @@ from tests.factories.auth_factories import (
     create_distributor,
     create_groups,
     create_reviewer,
+    generate_all_users_except,
     generate_auth_token,
 )
 
@@ -36,22 +37,19 @@ class RetrieveStoresTests(APITestCase):
         self.assertNotIn("stores", response.data)
 
     def test_non_distributor_failure(self):
-        customer = create_customer("customer@test.com")
-        token = generate_auth_token(customer.user)
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        users = generate_all_users_except("Distributor")
+        for user in users:
+            if hasattr(user, "user"):
+                token = generate_auth_token(user=user.user)
+            else:
+                token = generate_auth_token(user=user)
 
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertNotIn("stores", response.data)
-
-        reviewer = create_reviewer("reviewer@test.com")
-        token = generate_auth_token(reviewer)
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
-
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertNotIn("stores", response.data)
-
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertNotIn("stores", response.data)
+            
     def test_not_same_distributor_failure(self):
         url = reverse("distributors:stores", kwargs={"pk": self.distributor2.pk})
         response = self.client.get(url)
