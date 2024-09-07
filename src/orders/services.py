@@ -3,6 +3,7 @@ from collections import deque
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum, F
+from common.api.exceptions import Conflict
 from products.services import ProductSelector
 from products.models import Inventory
 from addresses.models import PickupAddress
@@ -12,11 +13,7 @@ from .models import Order, OrderItem, OrderItemStore
 MAX_ORDER_PRODUCTS = 5
 
 
-ORDER_CHOICES_MAPPING = {
-    1: "Placed",
-    2: "Shipped",
-    3: "Delivered",
-}
+ORDER_STATUS_CHOICES_LIST = ["placed", "shipped", "delivered"]
 
 class OrderService:
     def __init__(self) -> None:
@@ -44,6 +41,17 @@ class OrderService:
                     quantity=quantity,
                 )
                 self._assign_stores(new_order_item, quantity)
+
+    def update_status(self, order: Order, status: str):
+        curr_status, status = order.status, status.lower()
+        if status in ORDER_STATUS_CHOICES_LIST:
+            curr_index = ORDER_STATUS_CHOICES_LIST.index(curr_status)
+            status_index = ORDER_STATUS_CHOICES_LIST.index(status)
+            if status_index - curr_index != 1:
+                raise Conflict("Status should be updated to only the next stage")
+        order.status = status
+        order.full_clean()
+        order.save()
 
     def _assign_stores(self, order_item: OrderItem, quantity: int):
         inventories = deque(

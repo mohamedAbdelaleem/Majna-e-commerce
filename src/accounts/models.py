@@ -37,6 +37,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     @property
     def is_reviewer(self) -> bool:
         return self.groups.filter(name="Reviewer").exists()
+    
+    @property
+    def is_delivery(self) -> bool:
+        return self.groups.filter(name="Delivery").exists()
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         send_mail(subject, message, from_email, [self.email], **kwargs)

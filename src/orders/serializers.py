@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from orders.services import ORDER_CHOICES_MAPPING, OrderSelector
+from addresses.serializers import PickupAddressOutSerializer, StoreOutSerializer
+from orders.services import ORDER_STATUS_CHOICES_LIST, OrderSelector
 from products.serializers import ProductListOutSerializer
 from . import models
 
@@ -19,36 +20,6 @@ class OrderInputSerializer(serializers.Serializer):
     pickup_address_id = serializers.IntegerField()
 
 
-class OrderItemOutSerializer(serializers.ModelSerializer):
-    product = ProductListOutSerializer()
-    class Meta:
-        model = models.OrderItem
-        fields = ['quantity', 'unit_price', 'product']
-
-
-class OrderOutSerializer(serializers.ModelSerializer):
-    order_items = OrderItemOutSerializer(many=True, source="orderitem_set")
-    total_price = serializers.SerializerMethodField()
-    status = serializers.SerializerMethodField()
-    class Meta:
-        model = models.Order
-        fields = [
-            "id",
-            "customer_id",
-            "pickup_address_id",
-            "status",
-            "ordered_at",
-            "total_price",
-            "order_items"
-        ]
-
-    def get_total_price(self, obj):
-        return order_selector.get_order_total_price(obj.pk)
-    
-    def get_status(self, obj):
-        return ORDER_CHOICES_MAPPING[obj.status]
-
-
 class OrderListQueryParametersSerializer(serializers.Serializer):
     ordering = serializers.CharField(required=False)
     status = serializers.CharField(required=False)
@@ -63,13 +34,89 @@ class OrderListQueryParametersSerializer(serializers.Serializer):
                 raise ValidationError("Invalid Ordering attributes")
         return ordering_list
 
-    def validate_status(self, val):
+    def validate_status(self, val: str):
         if not val:
             return []
 
-        if val not in ORDER_CHOICES_MAPPING.values():
+        val = val.lower()
+        if val not in ORDER_STATUS_CHOICES_LIST:
             raise ValidationError("Invalid status")
+        return val
 
-        for key, value in ORDER_CHOICES_MAPPING.items():
-            if value == val:
-                return key
+
+
+class OrderItemOutSerializer(serializers.ModelSerializer):
+    product = ProductListOutSerializer()
+    class Meta:
+        model = models.OrderItem
+        fields = ['quantity', 'unit_price', 'product']
+
+
+class BaseOrderOutSerializer(serializers.ModelSerializer):
+    total_price = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    class Meta:
+        model = models.Order
+        fields = [
+            "id",
+            "customer_id",
+            "pickup_address_id",
+            "status",
+            "ordered_at",
+            "total_price",
+        ]
+
+    def get_total_price(self, obj):
+        return order_selector.get_order_total_price(obj.pk)
+    
+    def get_status(self, obj):
+        return obj.get_status_display()
+
+
+class OrderOutSerializer(BaseOrderOutSerializer):
+    order_items = OrderItemOutSerializer(many=True, source="orderitem_set")
+    class Meta(BaseOrderOutSerializer.Meta):
+        fields = BaseOrderOutSerializer.Meta.fields + ['order_items']
+
+
+
+class DeliveryOrderListOutSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    class Meta:
+        model = models.Order
+        fields = [
+            "id",
+            "customer_id",
+            "pickup_address_id",
+            "status",
+            "ordered_at",
+        ]
+    
+    def get_status(self, obj):
+        return obj.get_status_display()
+
+
+class OrderItemStoresOutSerializer(serializers.ModelSerializer):
+    store = StoreOutSerializer()
+    class Meta:
+        model = models.OrderItemStore
+        fields = ['id', 'order_item_id', "store_id", "reserved_quantity", "store"]
+
+
+class DeliveryOrderItemOutSerializer(serializers.ModelSerializer):
+    product = ProductListOutSerializer()
+    stores = OrderItemStoresOutSerializer(many=True, source="orderitemstore_set")
+    class Meta:
+        model = models.OrderItem
+        fields = ['quantity', 'unit_price', 'product', 'stores']
+
+class DeliveryOrderOutSerializer(BaseOrderOutSerializer):
+    order_items = DeliveryOrderItemOutSerializer(many=True, source="orderitem_set")
+    pickup_address = PickupAddressOutSerializer()
+    
+    class Meta(BaseOrderOutSerializer.Meta):
+        fields = BaseOrderOutSerializer.Meta.fields + ['order_items', 'pickup_address']
+
+
+class OrderStatusInputSerializer(serializers.Serializer):
+    status = serializers.CharField()

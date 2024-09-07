@@ -26,4 +26,13 @@ class CustomersOnly(permissions.BasePermission):
 
         return request.user.is_customer
 
+
+class DeliveriesOnly(permissions.BasePermission):
+
+    message = "Only Deliveries can perform this action"
+
+    def has_permission(self, request, view):
+
+        return request.user.is_delivery
+
       
