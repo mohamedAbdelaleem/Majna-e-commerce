@@ -25,7 +25,7 @@ class LoginTests(APITestCase):
         
         self.assertIn("token", response.data)
         self.assertEqual(response.data["user"]["email"], self.user.email)
-        self.assertEqual(response.data["user"]["user_role"], "customer")
+        self.assertEqual(response.data["user"]["user_role"], "Customer")
 
     def test_invalid_credentials_failure(self):
         invalid_data = {"email": "test12@test.com", "password": "12345aa"}

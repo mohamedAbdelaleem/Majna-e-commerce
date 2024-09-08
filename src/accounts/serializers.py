@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from rest_framework import serializers
-from .models import Customer, Distributor
+from .models import CustomUser, Customer, Distributor
 from .utils import clean_email
 
 
@@ -28,16 +28,11 @@ class UserSerializer(serializers.ModelSerializer):
             "email_confirmed": {"read_only": True},
         }
 
-    def get_user_role(self, user_obj):
-        role = None
-        if user_obj.is_customer:
-            role = "customer"
-        elif user_obj.is_distributor:
-            role = "distributor"
-        elif user_obj.is_reviewer:
-            role = "reviewer"
-
-        return role
+    def get_user_role(self, user_obj: CustomUser):
+        group = user_obj.groups.all().first()
+        if not group:
+            return None
+        return group.name
 
     def validate_role(self, value):
         roles = ("customer", "distributor")
