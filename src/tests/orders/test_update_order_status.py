@@ -28,14 +28,18 @@ class OrderDetailsTests(APITestCase):
         cls.product1 = ProductFactory.create(
             name="Samsung new phone", description="New phone From Samsung"
         )
-        cls.inventory = InventoryFactory.create(store=cls.store, product=cls.product1, quantity=15)
+        cls.inventory = InventoryFactory.create(
+            store=cls.store, product=cls.product1, quantity=15
+        )
         cls.cover_image = AlbumItemFactory.create(product=cls.product1, is_cover=True)
         cls.customer = create_customer("customer@test.com")
         cls.pickup_address = PickupAddressFactory.create(customer=cls.customer)
-        cls.order = create_test_order(cls.customer, cls.pickup_address, cls.product1, 5, cls.store)
-        
+        cls.order = create_test_order(
+            cls.customer, cls.pickup_address, cls.product1, 5, cls.store, "placed"
+        )
+
         cls.delivery = create_delivery("delivery@test.com")
-        cls.url = reverse("orders:order", kwargs={'pk': cls.order.pk})
+        cls.url = reverse("orders:order", kwargs={"pk": cls.order.pk})
 
     def test_unauthenticated_failure(self):
         response = self.client.patch(self.url)
@@ -60,7 +64,7 @@ class OrderDetailsTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {delivery_token}")
         response = self.client.patch(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_delivery_success_delivered_update(self):
         self.order.status = "shipped"
         self.order.save()
@@ -70,7 +74,7 @@ class OrderDetailsTests(APITestCase):
         response = self.client.patch(self.url, data)
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_invalid_reverse_update(self):
         self.order.status = "shipped"
         self.order.save()

@@ -6,6 +6,7 @@ from addresses.models import PickupAddress, Store
 
 
 ORDER_STATUS_CHOICES = [
+    ("pending", "Pending"),
     ("placed", "Placed"),
     ("shipped", "Shipped"),
     ("delivered", "Delivered"),
@@ -16,7 +17,7 @@ class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
     products = models.ManyToManyField(Product, through="OrderItem")
     pickup_address = models.ForeignKey(PickupAddress, on_delete=models.PROTECT)
-    status = models.CharField(choices=ORDER_STATUS_CHOICES, default="placed", max_length=12)
+    status = models.CharField(choices=ORDER_STATUS_CHOICES, default="pending", max_length=12)
     ordered_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:

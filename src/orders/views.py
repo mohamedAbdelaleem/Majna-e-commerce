@@ -1,6 +1,8 @@
-from functools import partial
-from django.shortcuts import get_object_or_404
+import stripe
+from django.conf import settings
+from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -24,10 +26,12 @@ class OrderListCreateView(APIView):
 
         serializer.is_valid(raise_exception=True)
         service = services.OrderService()
-        service.create(**serializer.validated_data, customer_id=customer_pk)
+        intent = service.create(**serializer.validated_data, customer_id=customer_pk)
 
         return Response(
-            data={"message": "Order Placed Successfully!"},
+            data={
+                "client_secret": intent["client_secret"],
+                'dpm_checker_link': 'https://dashboard.stripe.com/settings/payment_methods/review?transaction_id={}'.format(intent['id'])},
             status=status.HTTP_201_CREATED,
         )
     
@@ -103,3 +107,35 @@ class OrderDetailUpdateView(APIView):
             data={"message": "Order Status Updated Successfully!"},
             status=status.HTTP_200_OK,
         )
+
+
+@api_view(["POST"])
+def webhook(request):
+    event = None
+    payload = request.body
+    endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
+    if endpoint_secret:
+        sig_header = request.headers.get('stripe-signature', None)
+        stripe.api_key = settings.STRIPE_SECRET
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
+            )
+        except stripe.error.SignatureVerificationError as e:
+            print('Webhook signature verification failed.' + str(e))
+            return Response({'success':False})
+
+    if event and event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        order_id = int(payment_intent['metadata']['order_id'])
+        service = services.OrderService()
+        service.handle_payment_intent_succeeded(order_id)
+    else:
+        print('Unhandled event type {}'.format(event['type']))
+
+    return Response({'success':True})
+
+
+@api_view(["GET"])
+def get_publisher_key(request):
+    return Response({'publisher-key': settings.STRIPE_PUBLISHER})

@@ -31,8 +31,9 @@ def create_test_order(
     product: Product,
     quantity: int,
     store: Store,
+    status: str = "pending"
 ):
-    order = OrderFactory.create(customer=customer, pickup_address=pickup_address)
+    order = OrderFactory.create(customer=customer, pickup_address=pickup_address, status=status)
     order_item = OrderItemFactory.create(product=product, order=order, quantity=quantity)
     OrderItemStoreFactory.create(
         order_item=order_item, store=store, reserved_quantity=quantity

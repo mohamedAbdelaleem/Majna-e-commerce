@@ -69,5 +69,5 @@ class DeliveryOrderListTests(APITestCase):
     def test_retrieved_orders_count(self):
         delivery_token = generate_auth_token(self.delivery)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {delivery_token}")
-        response = self.client.get(self.url, QUERY_STRING="status=placed")
+        response = self.client.get(self.url, QUERY_STRING="status=pending")
         self.assertEqual(len(response.data['results']), 1)

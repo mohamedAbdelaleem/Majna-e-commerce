@@ -187,3 +187,14 @@ AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
 #     },
 #     "staticfiles": {"BACKEND": "storages.backends.s3.S3Storage"},
 # }
+
+
+STRIPE_SECRET = os.environ.get(
+    "STRIPE_SECRET", default=local_settings.STRIPE_SECRET
+)
+STRIPE_PUBLISHER = os.environ.get(
+    "STRIPE_PUBLISHER", default=local_settings.STRIPE_PUBLISHER
+)
+STRIPE_ENDPOINT_SECRET = os.environ.get(
+    "STRIPE_ENDPOINT_SECRET", default=local_settings.STRIPE_ENDPOINT_SECRET
+)

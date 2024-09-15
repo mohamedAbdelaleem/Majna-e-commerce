@@ -7,12 +7,14 @@ name = "pypi"
 django = "*"
 djangorestframework = "*"
 ruff = "*"
-psycopg = "*"
 psycopg2 = "*"
 django-rest-knox = "*"
 supabase = "*"
 factory-boy = "*"
 faker = "*"
+stripe = "*"
+psycopg = "*"
+psycopg-binary = "*"
 
 [dev-packages]
 

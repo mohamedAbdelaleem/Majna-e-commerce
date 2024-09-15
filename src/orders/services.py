@@ -1,9 +1,11 @@
 from typing import List, Dict
+import stripe
 from collections import deque
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Sum, F
-from common.api.exceptions import Conflict
+from common.api.exceptions import Conflict, ServerError
 from products.services import ProductSelector
 from products.models import Inventory
 from addresses.models import PickupAddress
@@ -13,7 +15,7 @@ from .models import Order, OrderItem, OrderItemStore
 MAX_ORDER_PRODUCTS = 5
 
 
-ORDER_STATUS_CHOICES_LIST = ["placed", "shipped", "delivered"]
+ORDER_STATUS_CHOICES_LIST = ["pending", "placed", "shipped", "delivered"]
 
 class OrderService:
     def __init__(self) -> None:
@@ -41,6 +43,11 @@ class OrderService:
                     quantity=quantity,
                 )
                 self._assign_stores(new_order_item, quantity)
+            
+            total_price = self.order_selector.get_order_total_price(order.pk)
+            intent = self._create_payment_intent(order.pk, total_price)
+
+        return intent
 
     def update_status(self, order: Order, status: str):
         curr_status, status = order.status, status.lower()
@@ -52,6 +59,9 @@ class OrderService:
         order.status = status
         order.full_clean()
         order.save()
+
+    def handle_payment_intent_succeeded(self, order_id: int):
+        Order.objects.filter(id=order_id).update(status="placed")
 
     def _assign_stores(self, order_item: OrderItem, quantity: int):
         inventories = deque(
@@ -91,6 +101,25 @@ class OrderService:
         ).exists():
             raise ValidationError("Invalid Pickup Address")
 
+    def _create_payment_intent(self, order_id: int, total_price: float):
+        try:
+            stripe.api_key = settings.STRIPE_SECRET
+            intent = stripe.PaymentIntent.create(
+                amount= int(total_price * 100),
+                currency='usd',
+                automatic_payment_methods={
+                    'enabled': True,
+                },
+                metadata={
+                    'order_id': order_id,
+                }
+            )
+        except Exception as e:
+            print(f"#### Error: {e}")
+            raise ServerError()
+        
+        return intent
+        
 
 class OrderSelector:
 
