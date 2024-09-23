@@ -9,7 +9,7 @@ app_name = "customers"
 urlpatterns = [
     path(
         "<int:pk>/cart-items",
-        view=carts_views.CartItemListCreate().as_view(),
+        view=carts_views.CartItemListCreateDelete().as_view(),
         name="cart_items",
     ),
     path(

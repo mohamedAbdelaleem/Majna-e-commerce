@@ -36,6 +36,9 @@ class CartItemService:
     def cart_item_delete(self, cart_item: models.CartItem):
         cart_item.delete()
 
+    def clear_cart(self, customer_pk: int):
+        models.CartItem.objects.filter(customer_id=customer_pk).delete()
+        
 
 class CartItemSelector:
     def cart_item_exist(self, **filters) -> bool:

@@ -14,7 +14,7 @@ from .services import CartItemService, CartItemSelector
 from .models import CartItem
 
 
-class CartItemListCreate(APIView):
+class CartItemListCreateDelete(APIView):
     permission_classes = [IsAuthenticated, CustomersOnly]
 
     def post(self, request, **kwargs):
@@ -48,6 +48,16 @@ class CartItemListCreate(APIView):
         data = {"cart_items": serializer.data}
 
         return Response(data=data, status=status.HTTP_200_OK)
+
+    def delete(self, request, **kwargs):
+        customer_pk = kwargs["pk"]
+        if request.user.pk != customer_pk:
+            raise PermissionDenied("Can't clear cart of another user")
+
+        service = CartItemService()
+        service.clear_cart(customer_pk)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CartItemDetail(APIView):

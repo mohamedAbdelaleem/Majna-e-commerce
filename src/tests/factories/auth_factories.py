@@ -75,6 +75,7 @@ def create_delivery(email="test@test.com", password='123') -> AbstractBaseUser:
 
 
 def generate_all_users_except(role_name: str):
+    """Generate users to be used within unauthorized failure tests"""
     create_groups()
     users = []
     for i, role in enumerate(ROLES):
