@@ -1,11 +1,14 @@
 import json
+from django.test import TestCase
 from django.urls import reverse
 from django.db.models import Sum
 from rest_framework.test import APITestCase
 from rest_framework import status
 from orders.models import Order
+from orders.services import MAX_ORDER_PRODUCTS, OrderService
 from products.models import Inventory
-from tests.factories.products_factories import ProductFactory, InventoryFactory
+from tests.factories.orders_factories import create_test_order
+from tests.factories.products_factories import AlbumItemFactory, ProductFactory, InventoryFactory
 from tests.factories.store_factories import StoreFactory
 from tests.factories.addresses_factories import PickupAddressFactory
 from tests.factories.auth_factories import (
@@ -161,16 +164,14 @@ class OrderCreateTests(APITestCase):
 
     def test_max_products_failure(self):
         data = {
-            "order_items": [
-                {"product_id": self.product.pk, "quantity": 3},
-                {"product_id": self.product2.pk, "quantity": 3},
-                {"product_id": ProductFactory.create().pk, "quantity": 3},
-                {"product_id": ProductFactory.create().pk, "quantity": 3},
-                {"product_id": ProductFactory.create().pk, "quantity": 3},
-                {"product_id": ProductFactory.create().pk, "quantity": 3},
-            ],
+            "order_items": [],
             "pickup_address_id": self.pickup_address.pk,
         }
+        for _ in range(MAX_ORDER_PRODUCTS + 1):
+            data["order_items"].append(
+                {"product_id": ProductFactory.create().pk, "quantity": 3}
+            )
+        
         orders_count_before = Order.objects.filter(customer_id=self.customer.pk).count()
         json_data = json.dumps(data)
         response = self.client.post(
@@ -181,6 +182,7 @@ class OrderCreateTests(APITestCase):
         self.assertEqual(orders_count_after, orders_count_before)
 
     def test_inventory_after_order_placement(self):
+        """Inventory is updated only after successful payments"""
         data = {
             "order_items": [{"product_id": self.product.pk, "quantity": 2}],
             "pickup_address_id": self.pickup_address.pk,
@@ -193,8 +195,34 @@ class OrderCreateTests(APITestCase):
             self.url, json_data, content_type="application/json"
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        quantity_after = Inventory.objects.filter(
-            product_id=self.product.pk
-        ).aggregate(total=Sum("quantity"))["total"]
+        quantity_after = Inventory.objects.filter(product_id=self.product.pk).aggregate(
+            total=Sum("quantity")
+        )["total"]
 
-        self.assertEqual(quantity_after + 2, quantity_before)
+        self.assertEqual(quantity_after, quantity_before)
+
+
+class PostSuccessfulPaymentTests(TestCase):
+    
+    def setUp(self):
+        create_groups()
+        self.distributor = create_distributor("distributor@test.com")
+        self.store = StoreFactory.create(distributor=self.distributor)
+        self.product1 = ProductFactory.create(
+            name="Samsung new phone", description="New phone From Samsung"
+        )
+        self.inventory = InventoryFactory.create(store=self.store, product=self.product1, quantity=15)
+        self.cover_image = AlbumItemFactory.create(product=self.product1, is_cover=True)
+        self.customer = create_customer("customer@test.com")
+        self.pickup_address = PickupAddressFactory.create(customer=self.customer)
+        self.order = create_test_order(self.customer, self.pickup_address, self.product1, 5, self.store)
+
+    def test_post_successful_payment_updates(self):
+        service = OrderService()
+        service.handle_payment_intent_succeeded(self.order.pk)
+        
+        self.order.refresh_from_db()
+        self.inventory.refresh_from_db()
+
+        self.assertEqual(self.order.status, "placed")
+        self.assertEqual(self.inventory.quantity, 10)

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Sum, F
+from rest_framework import exceptions as rest_exception
 from common.api.exceptions import Conflict, ServerError
 from products.services import ProductSelector
 from products.models import Inventory
@@ -12,10 +13,11 @@ from addresses.models import PickupAddress
 from .models import Order, OrderItem, OrderItemStore
 
 
-MAX_ORDER_PRODUCTS = 5
+MAX_ORDER_PRODUCTS = 10
 
 
 ORDER_STATUS_CHOICES_LIST = ["pending", "placed", "shipped", "delivered"]
+
 
 class OrderService:
     def __init__(self) -> None:
@@ -33,17 +35,19 @@ class OrderService:
                 customer_id=order_data["customer_id"],
                 pickup_address_id=order_data["pickup_address_id"],
             )
+            order_items_list = []
             for order_item in order_data["order_items"]:
                 product_id, quantity = order_item["product_id"], order_item["quantity"]
                 product = self.product_selector.get_product(pk=product_id)
-                new_order_item = OrderItem.objects.create(
+                order_items_list.append(OrderItem(
                     order=order,
                     product_id=product_id,
                     unit_price=product.price,
                     quantity=quantity,
-                )
-                self._assign_stores(new_order_item, quantity)
-            
+                ))
+
+            OrderItem.objects.bulk_create(order_items_list)
+
             total_price = self.order_selector.get_order_total_price(order.pk)
             intent = self._create_payment_intent(order.pk, total_price)
 
@@ -61,39 +65,53 @@ class OrderService:
         order.save()
 
     def handle_payment_intent_succeeded(self, order_id: int):
-        Order.objects.filter(id=order_id).update(status="placed")
+        with transaction.atomic():
+            order_items = OrderItem.objects.filter(order_id=order_id)
+            for order_item in order_items:
+                self._assign_stores(order_item)
+            Order.objects.filter(id=order_id).update(status="placed")
 
-    def _assign_stores(self, order_item: OrderItem, quantity: int):
+    def _assign_stores(self, order_item: OrderItem):
         inventories = deque(
             self.order_selector.get_available_inventories(order_item.product_id)
         )
+        requested_quantity = order_item.quantity
         order_item_stores = []
         inventories_update_list = []
-        while quantity > 0 and inventories:
+        while requested_quantity > 0 and inventories:
             curr_inventory = inventories.popleft()
-            reserved_quantity = min(quantity, curr_inventory.quantity)
+            reserved_quantity = min(requested_quantity, curr_inventory.quantity)
             order_item_store = OrderItemStore(
                 order_item=order_item,
                 reserved_quantity=reserved_quantity,
                 store_id=curr_inventory.store_id,
             )
-            quantity -= reserved_quantity
+            requested_quantity -= reserved_quantity
             curr_inventory.quantity -= reserved_quantity
             inventories_update_list.append(curr_inventory)
             order_item_stores.append(order_item_store)
 
         OrderItemStore.objects.bulk_create(order_item_stores)
-        Inventory.objects.bulk_update(inventories_update_list, ['quantity'])
+        Inventory.objects.bulk_update(inventories_update_list, ["quantity"])
 
     def _validate_order_items(self, order_items: List):
         if len(order_items) > MAX_ORDER_PRODUCTS:
             raise ValidationError("Max order items allowed exceeded")
-        
+
         for order_item in order_items:
             product_id, quantity = order_item["product_id"], order_item["quantity"]
-            total_inventory = self.product_selector.get_total_quantity(product_id)
-            if not total_inventory or total_inventory < quantity:
-                raise ValidationError("Not Enough inventory exist")
+            self._validate_requested_quantity(product_id, quantity)
+
+    def _validate_requested_quantity(self, product_id: int, quantity: int):
+        total_inventory = self.product_selector.get_total_quantity(product_id)
+        if total_inventory < quantity:
+
+            raise rest_exception.ValidationError({
+                    product_id: {
+                        "message": f"Not Enough inventory exist for product #{product_id}",
+                        "available_inventory": total_inventory,
+                    }
+                })
 
     def _validate_pickup_address(self, customer_pk: int, pickup_address_pk: int):
         if not PickupAddress.objects.filter(
@@ -105,25 +123,24 @@ class OrderService:
         try:
             stripe.api_key = settings.STRIPE_SECRET
             intent = stripe.PaymentIntent.create(
-                amount= int(total_price * 100),
-                currency='usd',
+                amount=int(total_price * 100),
+                currency="usd",
                 automatic_payment_methods={
-                    'enabled': True,
+                    "enabled": True,
                 },
                 metadata={
-                    'order_id': order_id,
-                }
+                    "order_id": order_id,
+                },
             )
         except Exception as e:
             print(f"#### Error: {e}")
             raise ServerError()
-        
+
         return intent
-        
+
 
 class OrderSelector:
-
-    def order_list(self, ordering: List[str]=None, **filters): 
+    def order_list(self, ordering: List[str] = None, **filters):
         orders = Order.objects.filter(**filters)
         if ordering:
             orders = orders.order_by(*ordering)
@@ -131,7 +148,7 @@ class OrderSelector:
 
     def get_order_total_price(self, order_pk: int):
         total_price = OrderItem.objects.filter(order_id=order_pk).aggregate(
-            total=Sum(F('quantity') * F("unit_price"), default=0)
+            total=Sum(F("quantity") * F("unit_price"), default=0)
         )["total"]
         return total_price
 

@@ -195,7 +195,7 @@ class ProductSelector:
     def get_total_quantity(self, product_id: int):
         total_quantity = product_models.Inventory.objects.filter(
             product_id=product_id
-        ).aggregate(total=Sum("quantity"))["total"]
+        ).aggregate(total=Sum("quantity", default=0))["total"]
         return total_quantity
 
     def get_inventory(self, product_id: int):
