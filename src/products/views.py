@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.parsers import FormParser
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.exceptions import PermissionDenied
 from common.api.permissions import DistributorsOnly, CustomersOnly
 from common.api.paginator import ProductPagination
@@ -122,3 +122,101 @@ class FavoriteItemDelete(APIView):
         service.remove_from_favorite(favorite_item)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AlbumItemListCreate(APIView):
+    permission_classes = [IsAuthenticated, DistributorsOnly]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, **kwargs):
+        product_pk = kwargs["pk"]
+        product = get_object_or_404(models.Product, pk=product_pk)
+        selector = services.ProductSelector()
+        is_owner = selector.is_owner(request.user.pk, product.pk)
+        if not is_owner:
+            raise PermissionDenied("Can't access this resource")
+
+        serializer = serializers.AlbumItemInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service = services.AlbumService()
+        service.add_album_item(product_pk, serializer.validated_data)
+
+        return Response(
+            data={"message": "Album item added successfully"},
+            status=status.HTTP_201_CREATED,
+        )
+
+    def get(self, request, **kwargs):
+        product_pk = kwargs["pk"]
+        product = get_object_or_404(models.Product, pk=product_pk)
+        selector = services.ProductSelector()
+        is_owner = selector.is_owner(request.user.pk, product.pk)
+        if not is_owner:
+            raise PermissionDenied("Can't access this resource")
+
+        album_items = models.AlbumItem.objects.filter(product_id=product_pk)
+        serializer = serializers.AlbumItemOutSerializer(album_items, many=True)
+        
+
+        return Response(data={"album_items": serializer.data})
+    
+class AlbumItemDetailUpdateDeleteView(APIView):
+    permission_classes = [IsAuthenticated, DistributorsOnly]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get(self, request, **kwargs):
+        product_pk = kwargs["pk"]
+        album_item_pk = kwargs["album_item_pk"]
+        product = get_object_or_404(models.Product, pk=product_pk)
+        selector = services.ProductSelector()
+        is_owner = selector.is_owner(request.user.pk, product.pk)
+        if not is_owner:
+            raise PermissionDenied("Can't access this resource")
+        
+
+        album_item = get_object_or_404(models.AlbumItem, pk=album_item_pk)
+        if album_item.product_id != product_pk:
+            raise PermissionDenied("Album item doesn't belong to this product")
+        
+        serializer = serializers.AlbumItemOutSerializer(album_item)
+
+        return Response(serializer.data)
+    
+    def patch(self, request, **kwargs):
+        product_pk = kwargs["pk"]
+        album_item_pk = kwargs["album_item_pk"]
+        product = get_object_or_404(models.Product, pk=product_pk)
+        selector = services.ProductSelector()
+        is_owner = selector.is_owner(request.user.pk, product.pk)
+        if not is_owner:
+            raise PermissionDenied("Can't access this resource")
+        
+
+        album_item = get_object_or_404(models.AlbumItem, pk=album_item_pk)
+        if album_item.product_id != product_pk:
+            raise PermissionDenied("Album item doesn't belong to this product")
+        serializer = serializers.AlbumItemInputSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        service = services.AlbumService()
+        service.update_album_item(album_item, serializer.validated_data)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete(self, request, **kwargs):
+        product_pk = kwargs["pk"]
+        album_item_pk = kwargs["album_item_pk"]
+        product = get_object_or_404(models.Product, pk=product_pk)
+        selector = services.ProductSelector()
+        is_owner = selector.is_owner(request.user.pk, product.pk)
+        if not is_owner:
+            raise PermissionDenied("Can't access this resource")
+        
+
+        album_item = get_object_or_404(models.AlbumItem, pk=album_item_pk)
+        if album_item.product_id != product_pk:
+            raise PermissionDenied("Album item doesn't belong to this product")
+        service = services.AlbumService()
+        service.delete_album_item(album_item)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+

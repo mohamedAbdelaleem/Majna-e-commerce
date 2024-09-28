@@ -50,7 +50,7 @@ class AddProductTests(APITestCase):
             content=b"A" * (settings.FILE_UPLOAD_MAX_MEMORY_SIZE + 1),
             content_type="image/*",
         )
-        cls.invalid_file_formate = SimpleUploadedFile(
+        cls.invalid_file_format = SimpleUploadedFile(
             name="name.pdf",
             content=b"A" * (settings.FILE_UPLOAD_MAX_MEMORY_SIZE - 1),
             content_type="application/pdf",
@@ -154,7 +154,7 @@ class AddProductTests(APITestCase):
     def test_invalid_image_file_format(self):
         data = self.data.copy()
         data["album"] = [[{"image": "image-1", "is_cover": "True"}]]
-        data["image-1"] = self.invalid_file_formate
+        data["image-1"] = self.invalid_file_format
         response = self.client.post(
             self.url, data=data, media_type="multipart/form-data"
         )

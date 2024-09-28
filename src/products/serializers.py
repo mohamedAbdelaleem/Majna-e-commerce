@@ -145,7 +145,7 @@ class AlbumItemOutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.AlbumItem
-        fields = ["is_cover", "url"]
+        fields = ["id", "is_cover", "url", "product_id"]
 
     def get_url(self, obj):
         image_url = obj.image.url

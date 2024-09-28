@@ -6,6 +6,7 @@ from django.db.models import Subquery, Sum
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.exceptions import PermissionDenied
 from brands.services import BrandSelector
+from common.api.exceptions import Conflict
 from utils.storage import SupabaseStorageService
 from common.validators import validate_file_format
 from addresses import models as addresses_models
@@ -19,6 +20,7 @@ class ProductService:
     def __init__(self) -> None:
         self.supabase = SupabaseStorageService()
         self.brand_selector = BrandSelector()
+        self.album_service = AlbumService()
 
     def create(self, product_data: Dict, distributor_pk) -> product_models.Product:
         is_authorized = self.brand_selector.has_distributor(
@@ -28,7 +30,7 @@ class ProductService:
             raise PermissionDenied(
                 "Distributor doesn't authorized for the selected brand"
             )
-        self._validate_album_items(product_data["album"])
+        self.album_service._validate_album_items(product_data["album"])
         self._validate_inventory(product_data["inventory"], distributor_pk)
 
         with transaction.atomic():
@@ -39,7 +41,7 @@ class ProductService:
                 sub_category=product_data["sub_category"],
                 brand_id=product_data["brand_pk"],
             )
-            self.add_album_items(
+            self.album_service.add_album_items(
                 product_pk=product.pk, album_items_data=product_data["album"]
             )
             self.add_inventory(
@@ -63,17 +65,6 @@ class ProductService:
     def delete(self, product: product_models.Product):
         product.delete()
 
-    def add_album_items(self, product_pk, album_items_data: List[Dict]):
-        album_items = []
-        for item in album_items_data:
-            image, is_cover = item["image"], item["is_cover"]
-            album_item = product_models.AlbumItem(
-                product_id=product_pk, image=image, is_cover=is_cover
-            )
-            album_item.full_clean()
-            album_items.append(album_item)
-        product_models.AlbumItem.objects.bulk_create(album_items)
-
     def add_inventory(self, product_pk, inventory_data: List[Dict]):
         for item in inventory_data:
             store_pk, quantity = item["store_pk"], item["quantity"]
@@ -81,25 +72,11 @@ class ProductService:
                 product_id=product_pk, store_id=store_pk, quantity=quantity
             )
 
-    def _validate_album_items(self, album_items_data: List[Dict]):
-        if len(album_items_data) > MAX_ALBUM_ITEMS:
-            raise ValidationError("Album Items can not be more than 10")
-
-        num_of_covers = 0
-        for item in album_items_data:
-            image, is_cover = item["image"], item["is_cover"]
-            validate_file_format(image, ["jpg", "png", "jpeg"])
-            if is_cover:
-                num_of_covers += 1
-
-        if num_of_covers != 1:
-            raise ValidationError("Album must have One cover image")
-
     def _validate_inventory(self, inventory: List[Dict], distributor_pk):
         stores = [inv["store_pk"] for inv in inventory]
         if len(stores) == 0:
             raise ValidationError("No stores are provided!")
-        
+
         stores_num = (
             addresses_models.Store.objects.filter(
                 pk__in=stores, distributor_id=distributor_pk
@@ -203,10 +180,80 @@ class ProductSelector:
             product_id=product_id
         ).values("store_id", "quantity")
         return inventory
-    
+
     def is_owner(self, distributor_pk: int, product_pk: int):
-        products = self.product_list(id=product_pk, inventory__store__distributor_id=distributor_pk)
+        products = self.product_list(
+            id=product_pk, inventory__store__distributor_id=distributor_pk
+        )
         return products.exists()
 
     def get_product(self, **criteria):
         return product_models.Product.objects.get(**criteria)
+
+
+class AlbumService:
+    def add_album_items(self, product_pk, album_items_data: List[Dict]):
+        """Bulk add album items. This method used when creating a product"""
+        album_items = []
+        for item in album_items_data:
+            image, is_cover = item["image"], item["is_cover"]
+            album_item = product_models.AlbumItem(
+                product_id=product_pk, image=image, is_cover=is_cover
+            )
+            album_item.full_clean()
+            album_items.append(album_item)
+        product_models.AlbumItem.objects.bulk_create(album_items)
+
+    def add_album_item(self, product_pk, album_item_data: Dict):
+        """Add album item to a product album"""
+        album_items_count = product_models.AlbumItem.objects.filter(
+            product_id=product_pk
+        ).count()
+        if album_items_count == MAX_ALBUM_ITEMS:
+            raise Conflict(f"Max number of album items is {MAX_ALBUM_ITEMS}")
+
+        image, is_cover = album_item_data["image"], album_item_data["is_cover"]
+        validate_file_format(image, ["png", "jpg", "jpeg"])
+        with transaction.atomic():
+            album_item = product_models.AlbumItem(
+                product_id=product_pk, image=image, is_cover=is_cover
+            )
+            if is_cover:
+                product_models.AlbumItem.objects.filter(
+                    product_id=product_pk, is_cover=True
+                ).update(is_cover=False)
+            album_item.full_clean()
+            album_item.save()
+
+    def update_album_item(self, album_item: product_models.AlbumItem, data: Dict):
+        with transaction.atomic():
+            if "is_cover" in data and data["is_cover"]:
+                product_models.AlbumItem.objects.filter(
+                    product_id=album_item.product_id, is_cover=True
+                ).update(is_cover=False)
+                album_item.is_cover = True
+            if "image" in data:
+                album_item.image = data["image"]
+                validate_file_format(album_item.image, ["png", "jpg", "jpeg"])
+            album_item.full_clean()
+            album_item.save()
+
+    def delete_album_item(self, album_item: product_models.AlbumItem):
+        if album_item.is_cover:
+            raise Conflict("Can't delete the cover image")
+        album_item.delete()
+
+
+    def _validate_album_items(self, album_items_data: List[Dict]):
+        if len(album_items_data) > MAX_ALBUM_ITEMS:
+            raise ValidationError("Album Items can not be more than 10")
+
+        num_of_covers = 0
+        for item in album_items_data:
+            image, is_cover = item["image"], item["is_cover"]
+            validate_file_format(image, ["jpg", "png", "jpeg"])
+            if is_cover:
+                num_of_covers += 1
+
+        if num_of_covers != 1:
+            raise ValidationError("Album must have One cover image")
