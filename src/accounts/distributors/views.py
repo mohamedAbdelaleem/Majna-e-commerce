@@ -63,7 +63,7 @@ class DistributorProductListView(APIView):
 
         selector = ProductSelector()
         products = selector.product_list(
-            inventory__store__distributor_id=distributor_pk, ordering=["-id"]
+            inventory__store__distributor_id=distributor_pk, ordering=["-id"], is_active=True
         ).distinct("id")
         paginator = ProductPagination()
         products = products.prefetch_related("brand")
@@ -84,7 +84,7 @@ class ProductDetailUpdateDeleteView(APIView):
             raise PermissionDenied("Access to this resource is denied")
 
         product_pk = kwargs["product_pk"]
-        product = get_object_or_404(Product, pk=product_pk)
+        product = get_object_or_404(Product, pk=product_pk, is_active=True)
         selector = ProductSelector()
         if not selector.is_owner(distributor_pk, product_pk):
             raise PermissionDenied("Access to this resource is denied")
@@ -99,7 +99,7 @@ class ProductDetailUpdateDeleteView(APIView):
             raise PermissionDenied("Access to this resource is denied")
 
         product_pk = kwargs["product_pk"]
-        product = get_object_or_404(Product, pk=product_pk)
+        product = get_object_or_404(Product, pk=product_pk, is_active=True)
         selector = ProductSelector()
         if not selector.is_owner(distributor_pk, product_pk):
             raise PermissionDenied("Access to this resource is denied")
@@ -118,7 +118,7 @@ class ProductDetailUpdateDeleteView(APIView):
             raise PermissionDenied("Access to this resource is denied")
 
         product_pk = kwargs["product_pk"]
-        product = get_object_or_404(Product, pk=product_pk)
+        product = get_object_or_404(Product, pk=product_pk, is_active=True)
         selector = ProductSelector()
         if not selector.is_owner(distributor_pk, product_pk):
             raise PermissionDenied("Access to this resource is denied")

@@ -34,6 +34,7 @@ class Product(models.Model):
     sub_category = models.ForeignKey(SubCategory, on_delete=models.PROTECT)
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
     stores = models.ManyToManyField(Store, through="Inventory")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         indexes = [
@@ -41,7 +42,8 @@ class Product(models.Model):
                 SearchVector("name", "description", config="english"),
                 name="search_vector_idx",
             ),
-            models.Index(fields=['price'], name='price_idx')
+            models.Index(fields=['price'], name='price_idx'),
+            models.Index(fields=["is_active"], name="is_active_idx")
         ]
 
     def __str__(self) -> str:

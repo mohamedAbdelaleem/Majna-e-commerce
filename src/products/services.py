@@ -6,6 +6,7 @@ from django.db.models import Subquery, Sum
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.exceptions import PermissionDenied
 from brands.services import BrandSelector
+from carts.models import CartItem
 from common.api.exceptions import Conflict
 from utils.storage import SupabaseStorageService
 from common.validators import validate_file_format
@@ -63,7 +64,11 @@ class ProductService:
             product.save()
 
     def delete(self, product: product_models.Product):
-        product.delete()
+        with transaction.atomic():
+            product_models.FavoriteItem.objects.filter(product_id=product.pk).delete()
+            CartItem.objects.filter(product_id=product.pk).delete()
+            product.is_active = False
+            product.save()
 
     def add_inventory(self, product_pk, inventory_data: List[Dict]):
         for item in inventory_data:

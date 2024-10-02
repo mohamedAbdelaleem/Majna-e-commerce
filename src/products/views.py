@@ -41,7 +41,7 @@ class ProductListCreateView(APIView):
         query_params.is_valid(raise_exception=True)
 
         selector = services.ProductSelector()
-        products = selector.product_list(**query_params.validated_data)
+        products = selector.product_list(**query_params.validated_data, is_active=True)
 
         paginator = ProductPagination()
         products = products.prefetch_related("brand")
@@ -59,7 +59,7 @@ class ProductDetailView(APIView):
 
     def get(self, request, **kwargs):
         pk = kwargs["pk"]
-        product = get_object_or_404(models.Product, pk=pk)
+        product = get_object_or_404(models.Product, pk=pk, is_active=True)
         serializer = serializers.ProductOutSerializer(
             product, context={"request": request}
         )

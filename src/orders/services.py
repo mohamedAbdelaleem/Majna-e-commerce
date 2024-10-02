@@ -98,6 +98,11 @@ class OrderService:
         if len(order_items) > MAX_ORDER_PRODUCTS:
             raise ValidationError("Max order items allowed exceeded")
 
+        product_ids = [item["product_id"] for item in order_items]
+        inactive_products = self.product_selector.product_list(id__in=product_ids, is_active=False)
+        if inactive_products.exists():
+            raise ValidationError("Requested product has been removed removed")
+        
         for order_item in order_items:
             product_id, quantity = order_item["product_id"], order_item["quantity"]
             self._validate_requested_quantity(product_id, quantity)

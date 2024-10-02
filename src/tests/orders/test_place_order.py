@@ -7,6 +7,7 @@ from rest_framework import status
 from orders.models import Order
 from orders.services import MAX_ORDER_PRODUCTS, OrderService
 from products.models import Inventory
+from products.services import ProductService
 from tests.factories.orders_factories import create_test_order
 from tests.factories.products_factories import AlbumItemFactory, ProductFactory, InventoryFactory
 from tests.factories.store_factories import StoreFactory
@@ -180,6 +181,14 @@ class OrderCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         orders_count_after = Order.objects.filter(customer_id=self.customer.pk).count()
         self.assertEqual(orders_count_after, orders_count_before)
+
+    def test_place_soft_deleted_product_failure(self):
+        service = ProductService()
+        service.delete(self.product)
+        response = self.client.post(
+            self.url, self.json_data, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_inventory_after_order_placement(self):
         """Inventory is updated only after successful payments"""
