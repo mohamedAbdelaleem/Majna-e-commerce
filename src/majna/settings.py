@@ -39,9 +39,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
     "rest_framework",
     "knox",
     "storages",
+    
     "accounts",
     "brands",
     "brands_applications",
@@ -49,6 +51,7 @@ INSTALLED_APPS = [
     "products",
     "carts",
     "orders",
+    "reviews",
 ]
 
 MIDDLEWARE = [
